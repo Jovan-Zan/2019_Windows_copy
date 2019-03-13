@@ -1,0 +1,10 @@
+﻿ 
+ See: https://stackoverflow.com/questions/20449316/how-add-context-menu-item-to-windows-explorer-for-folders
+ Added Robo-Copy command to:
+ Computer\HKEY_CLASSES_ROOT\Directory\shell
+ Computer\HKEY_CLASSES_ROOT\*\shell\
+
+ In order for the Robo-Copy option be available when more than 16 items
+ are selected,to HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer 
+ add DWORD MultipleInvokePromptMinimum and set it to 16.
+ link: https://www.sevenforums.com/tutorials/131470-context-menu-items-missing-fix-when-more-than-15-files-selected.html
