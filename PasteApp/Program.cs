@@ -97,7 +97,7 @@ namespace PasteApp
         /// <returns>String representing date and tim in format "hh:mm:ss.ffffff ".</returns>
         public static string CurrentTime()
         {
-            return DateTime.Now.ToString("hh:mm:ss.ffffff ");
+            return DateTime.Now.ToString("HH:mm:ss.ffffff ");
         }
 
         private static readonly string productName = "MultithreadWindowsCopy";
@@ -109,9 +109,9 @@ namespace PasteApp
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), productName, "debug.log")));
             Debug.AutoFlush = true;
 
-            Debug.WriteLine(Environment.NewLine + CurrentTime() + "Paste started");
+            Debug.WriteLine(Environment.NewLine + CurrentTime() + "PasteApp started");
 
-            // Destination folder.
+            // Obtain destination folder from arguments.
             string destination;
             try
             {
@@ -129,57 +129,77 @@ namespace PasteApp
             string root = fileContents[0];
             fileContents.RemoveAt(0);
             string[] foldersAndFiles = fileContents.ToArray<string>();
+            string[] files = foldersAndFiles.Where(item => File.Exists(Path.Combine(root, item))).ToArray();
+            string[] folders = foldersAndFiles.Where(item => Directory.Exists(Path.Combine(root, item))).ToArray();
 
             Debug.WriteLine(CurrentTime() + "Items scheduled for pasting:");
             Debug.WriteLine(root + @"\");
             Debug.Indent();
-            foreach (string item in foldersAndFiles)
-                Debug.WriteLine(item);
+            foreach (string file in files)
+                Debug.WriteLine(file);
+            foreach (string folder in folders)
+                Debug.WriteLine(folder);
             Debug.Unindent();
 
             Debug.WriteLine(CurrentTime() + "Total file count: " + GetTotalFileCount(root, foldersAndFiles));
             Debug.WriteLine(CurrentTime() + "Total file size: " + GetTotalFileSize(root, foldersAndFiles));
 
             // Create robocopy script.
-            StringBuilder sb = new StringBuilder();
-            foreach (string item in foldersAndFiles)
+            // Commands to execute.
+            List<string> commands = new List<string>();
+            string options = "/nc /fp /bytes";
+            foreach (string file in files)
             {
-                string itemPath = Path.Combine(root, item);
-                if (File.Exists(itemPath) == true)
-                    sb.AppendLine("robocopy " + QuoteEnclose(root) + " " + QuoteEnclose(destination) + " " + QuoteEnclose(item));
-                else if (Directory.Exists(itemPath) == true)
-                    sb.AppendLine("robocopy " + QuoteEnclose(itemPath) + " " + QuoteEnclose(Path.Combine(destination, item)) + " /e");
+                string filePath = Path.Combine(root, file);
+                if (File.Exists(filePath) == true)
+                    commands.Add(QuoteEnclose(root) + " " + QuoteEnclose(destination) + " " + QuoteEnclose(file) + " " + options);
                 else
-                    throw new Exception("Given path is not a file nor a directory: " + itemPath + "!");
+                    throw new Exception("The file " + filePath + " doesn't exist!");
             }
-            string copyScript = sb.ToString();
-            Debug.WriteLine(Environment.NewLine + CurrentTime() + "Script to execute:");
-            Debug.WriteLine(copyScript);
-         
-            // Run robocopy script
-            using (Process p = new Process())
+            foreach (string folder in folders)
             {
-                p.StartInfo.FileName = "cmd.exe";
-                p.StartInfo.CreateNoWindow = true;
-                p.StartInfo.UseShellExecute = false;
-                p.StartInfo.RedirectStandardInput = true;
+                string folderPath = Path.Combine(root, folder);
+                if (Directory.Exists(folderPath) == true)
+                    commands.Add(QuoteEnclose(folderPath) + " " + QuoteEnclose(Path.Combine(destination, folder)) + " /e" + " " + options);
+                else
+                    throw new Exception("The folder " + folderPath + " doesn't exist!");
+            }
 
-                Debug.WriteLine(CurrentTime() + "Executing script...");
-                p.Start();
+            string copyScript = string.Join(Environment.NewLine, commands.ToArray());
+            Debug.WriteLine(CurrentTime() + "Script to execute:");
+            Debug.WriteLine(copyScript);
 
-                StreamWriter sw = p.StandardInput;
-                foreach (string line in copyScript.Split(new[] { Environment.NewLine }, StringSplitOptions.None))
+            // Run robocopy script
+            foreach (string command in commands) {
+                using (Process p = new Process())
                 {
-                    if (sw.BaseStream.CanWrite == true)
-                        sw.WriteLine(line);
-                    else
-                        throw new Exception("Cannot execute robocopy command, base stream doesn't allow writes!");
+                    p.StartInfo.FileName = "robocopy.exe";
+                    p.StartInfo.Arguments = command;
+                    p.StartInfo.CreateNoWindow = true;
+                    p.StartInfo.UseShellExecute = false;
+                    p.StartInfo.RedirectStandardInput = true;
+                    p.StartInfo.RedirectStandardError = true;
+                    p.StartInfo.RedirectStandardOutput = true;
+                    p.OutputDataReceived += (s, e) => Debug.WriteLine(e.Data);
+                    p.ErrorDataReceived += (s, e) => Debug.WriteLine(e.Data);
+
+                    Debug.WriteLine(CurrentTime() + "Executing script...");
+                    p.Start();
+                    p.BeginOutputReadLine();
+                    p.BeginErrorReadLine();
                     
+                    p.WaitForExit();
                 }
             }
+            
             Debug.WriteLine(CurrentTime() + "Done");
 
             Debug.WriteLine(CurrentTime() + "PasteApp finished.");
+        }
+
+        private static void P_Exited(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
     }
 }
