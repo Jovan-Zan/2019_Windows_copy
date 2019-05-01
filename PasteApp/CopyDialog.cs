@@ -208,7 +208,6 @@ namespace PasteApp
             this.pbProgressBar.Name = "pbProgressBar";
             this.pbProgressBar.Size = new System.Drawing.Size(394, 21);
             this.pbProgressBar.TabIndex = 2;
-            this.pbProgressBar.Maximum = 100; // 100%
             // 
             // lblCurrentFileName
             // 
@@ -276,6 +275,7 @@ namespace PasteApp
             this.btnPause.Size = new System.Drawing.Size(25, 25);
             this.btnPause.TabIndex = 2;
             this.btnPause.UseVisualStyleBackColor = true;
+            this.btnPause.Click += new System.EventHandler(this.btnPause_Click);
             // 
             // btnCancel
             // 
@@ -286,6 +286,7 @@ namespace PasteApp
             this.btnCancel.Size = new System.Drawing.Size(25, 25);
             this.btnCancel.TabIndex = 3;
             this.btnCancel.UseVisualStyleBackColor = true;
+            this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             // 
             // lblSpeed
             // 
@@ -309,6 +310,16 @@ namespace PasteApp
             this.tlpHorizontal.ResumeLayout(false);
             this.ResumeLayout(false);
 
+        }
+
+        private void btnPause_Click(object sender, EventArgs e)
+        {
+            Program.PauseCopying();
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            Program.ResumeCopying();
         }
     }
 }

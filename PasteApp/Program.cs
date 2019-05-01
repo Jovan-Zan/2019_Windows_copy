@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -11,6 +12,115 @@ namespace PasteApp
 {
     class Program
     {
+        [Flags]
+        public enum ThreadAccess : int
+        {
+            TERMINATE = (0x0001),
+            SUSPEND_RESUME = (0x0002),
+            GET_CONTEXT = (0x0008),
+            SET_CONTEXT = (0x0010),
+            SET_INFORMATION = (0x0020),
+            QUERY_INFORMATION = (0x0040),
+            SET_THREAD_TOKEN = (0x0080),
+            IMPERSONATE = (0x0100),
+            DIRECT_IMPERSONATION = (0x0200)
+        }
+
+        [DllImport("kernel32.dll")]
+        static extern IntPtr OpenThread(ThreadAccess dwDesiredAccess, bool bInheritHandle, uint dwThreadId);
+
+        [DllImport("kernel32.dll")]
+        static extern uint SuspendThread(IntPtr hThread);
+
+        [DllImport("kernel32.dll")]
+        static extern int ResumeThread(IntPtr hThread);
+
+        [DllImport("kernel32", CharSet = CharSet.Auto, SetLastError = true)]
+        static extern bool CloseHandle(IntPtr handle);
+
+
+        private static void SuspendProcess(int pid)
+        {
+            try
+            {               
+                var process = Process.GetProcessById(pid);
+           
+                if (process.ProcessName == string.Empty)
+                    return;
+                          
+                foreach (ProcessThread pT in process.Threads)
+                {
+                    IntPtr pOpenThread = OpenThread(ThreadAccess.SUSPEND_RESUME, false, (uint)pT.Id);
+
+                    if (pOpenThread == IntPtr.Zero)
+                    {
+                        continue;
+                    }
+
+                    SuspendThread(pOpenThread);
+
+                    CloseHandle(pOpenThread);
+                }
+
+                Debug.WriteLine(CurrentTime() + " [ERROR] Process " + process.ProcessName + "with id " + process.Id + " suspended.");
+            }
+            catch (ArgumentException e)
+            {
+                // Process has already ended
+                Debug.WriteLine(CurrentTime() + e.Message + Environment.NewLine + e.StackTrace);
+            }
+        }
+
+        public static void ResumeProcess(int pid)
+        {
+            try
+            { 
+                var process = Process.GetProcessById(pid);
+
+                if (process.ProcessName == string.Empty)
+                    return;
+
+                foreach (ProcessThread pT in process.Threads)
+                {
+                    IntPtr pOpenThread = OpenThread(ThreadAccess.SUSPEND_RESUME, false, (uint)pT.Id);
+
+                    if (pOpenThread == IntPtr.Zero)
+                    {
+                        continue;
+                    }
+
+                    var suspendCount = 0;
+                    do
+                    {
+                        suspendCount = ResumeThread(pOpenThread);
+                    } while (suspendCount > 0);
+
+                    CloseHandle(pOpenThread);
+                }
+
+                Debug.WriteLine(CurrentTime() + " [ERROR] Process " + process.ProcessName + "with id " + process.Id + " resumed.");
+            }
+            catch (ArgumentException e)
+            {
+                // Process has already ended
+                Debug.WriteLine(CurrentTime() + e.Message + Environment.NewLine + e.StackTrace);
+            }
+}
+
+        private static readonly string productName = "MultithreadWindowsCopy";
+        private static int currentRobocopyProcessId = 0;
+
+        public static void PauseCopying()
+        {
+            SuspendProcess(currentRobocopyProcessId);
+        }
+
+        public static void ResumeCopying()
+        {
+           ResumeProcess(currentRobocopyProcessId);
+        }
+
+
         /// <summary>
         /// Extracts paths of folders and files which are to be copied.
         /// /// </summary>
@@ -20,8 +130,11 @@ namespace PasteApp
         /// </returns>
         private static string[] GetFoldersAndFilesToCopy()
         {
-            string inputFile = @"C:\Users\toshiba\Documents\MultithreadWindowsCopy\filesToCopy.out";
-            return File.ReadAllLines(inputFile);
+            string inputFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), productName, "filesToCopy.out");
+            if (File.Exists(inputFile))
+                return File.ReadAllLines(inputFile);
+            else
+                return new string[] { }; // return empty array
         }
 
         /// <summary>
@@ -102,8 +215,6 @@ namespace PasteApp
             return DateTime.Now.ToString("HH:mm:ss.ffffff ");
         }
 
-        private static readonly string productName = "MultithreadWindowsCopy";
-
         static void Main(string[] args)
         {             
             // Used for debbuging.
@@ -128,6 +239,11 @@ namespace PasteApp
             }
 
             List<string> fileContents = GetFoldersAndFilesToCopy().ToList<string>();
+
+            // There is nothing to copy.
+            if (fileContents.Count == 0)
+                return;
+
             string root = fileContents[0];
             fileContents.RemoveAt(0);
             string[] foldersAndFiles = fileContents.ToArray<string>();
@@ -143,7 +259,6 @@ namespace PasteApp
                 Debug.WriteLine(folder);
             Debug.Unindent();
 
-
             long totalFileCount = GetTotalFileCount(root, foldersAndFiles);
             long totalFileSize = GetTotalFileSize(root, foldersAndFiles);
 
@@ -151,9 +266,18 @@ namespace PasteApp
             Debug.WriteLine(CurrentTime() + "Total file size: " + totalFileSize);
 
             // Create robocopy script.
+            
             // Commands to execute.
             List<string> commands = new List<string>();
+
+            // Robocopy options for both files and folders.
+            // nc - do not display item class
+            // ndl - do not display copied directories
+            // fp - display full file path
+            // bytes - display file sizes in bytes
             string options = @"/nc /ndl /fp /bytes";
+
+            // Create commands to copy files.
             foreach (string file in files)
             {
                 string filePath = Path.Combine(root, file);
@@ -162,6 +286,8 @@ namespace PasteApp
                 else
                     throw new Exception("The file " + filePath + " doesn't exist!");
             }
+
+            // Create commands to copy folders.
             foreach (string folder in folders)
             {
                 string folderPath = Path.Combine(root, folder);
@@ -175,13 +301,15 @@ namespace PasteApp
             Debug.WriteLine(CurrentTime() + "Script to execute:");
             Debug.WriteLine(copyScript);
 
-            
+            // GUI
             CopyDialog copyDialog = new CopyDialog(totalFileCount, totalFileSize, root, destination);
             Thread UIThread = new Thread(() => Application.Run(copyDialog));
             UIThread.Start();
             
-            // Run robocopy script
             Debug.WriteLine(CurrentTime() + "Executing script...");
+            
+            // Run robocopy script
+            // For each robocopy command, a new robocopy.exe must be started.
             foreach (string command in commands) {
                 using (Process p = new Process())
                 {
@@ -193,6 +321,7 @@ namespace PasteApp
                     p.StartInfo.RedirectStandardError = true;
                     p.StartInfo.RedirectStandardOutput = true;
 
+                    // Handlers that parse robocopy output and update GUI.
                     p.OutputDataReceived += copyDialog.RobocopyOutputHandler;
                     p.ErrorDataReceived += copyDialog.RobocopyErrorHandler;
 
@@ -202,13 +331,15 @@ namespace PasteApp
                     p.Start();
                     p.BeginOutputReadLine();
                     p.BeginErrorReadLine();
-                    
+                    currentRobocopyProcessId = p.Id;
+
+
                     p.WaitForExit();
                 }
             }
+
             
             Debug.WriteLine(CurrentTime() + "Done");
-
             Debug.WriteLine(CurrentTime() + "PasteApp finished.");
 
             UIThread.Join();
