@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Windows.Forms;
 
 namespace PasteApp
 {
@@ -141,13 +143,17 @@ namespace PasteApp
                 Debug.WriteLine(folder);
             Debug.Unindent();
 
-            Debug.WriteLine(CurrentTime() + "Total file count: " + GetTotalFileCount(root, foldersAndFiles));
-            Debug.WriteLine(CurrentTime() + "Total file size: " + GetTotalFileSize(root, foldersAndFiles));
+
+            long totalFileCount = GetTotalFileCount(root, foldersAndFiles);
+            long totalFileSize = GetTotalFileSize(root, foldersAndFiles);
+
+            Debug.WriteLine(CurrentTime() + "Total file count: " + totalFileCount);
+            Debug.WriteLine(CurrentTime() + "Total file size: " + totalFileSize);
 
             // Create robocopy script.
             // Commands to execute.
             List<string> commands = new List<string>();
-            string options = "/nc /fp /bytes";
+            string options = @"/nc /ndl /fp /bytes";
             foreach (string file in files)
             {
                 string filePath = Path.Combine(root, file);
@@ -169,7 +175,13 @@ namespace PasteApp
             Debug.WriteLine(CurrentTime() + "Script to execute:");
             Debug.WriteLine(copyScript);
 
+            
+            CopyDialog copyDialog = new CopyDialog(totalFileCount, totalFileSize, root, destination);
+            Thread UIThread = new Thread(() => Application.Run(copyDialog));
+            UIThread.Start();
+            
             // Run robocopy script
+            Debug.WriteLine(CurrentTime() + "Executing script...");
             foreach (string command in commands) {
                 using (Process p = new Process())
                 {
@@ -180,10 +192,13 @@ namespace PasteApp
                     p.StartInfo.RedirectStandardInput = true;
                     p.StartInfo.RedirectStandardError = true;
                     p.StartInfo.RedirectStandardOutput = true;
+
+                    p.OutputDataReceived += copyDialog.RobocopyOutputHandler;
+                    p.ErrorDataReceived += copyDialog.RobocopyErrorHandler;
+
                     p.OutputDataReceived += (s, e) => Debug.WriteLine(e.Data);
                     p.ErrorDataReceived += (s, e) => Debug.WriteLine(e.Data);
 
-                    Debug.WriteLine(CurrentTime() + "Executing script...");
                     p.Start();
                     p.BeginOutputReadLine();
                     p.BeginErrorReadLine();
@@ -195,6 +210,8 @@ namespace PasteApp
             Debug.WriteLine(CurrentTime() + "Done");
 
             Debug.WriteLine(CurrentTime() + "PasteApp finished.");
+
+            UIThread.Join();
         }
 
         private static void P_Exited(object sender, EventArgs e)

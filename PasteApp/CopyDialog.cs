@@ -8,13 +8,16 @@ using System.Windows;
 using System.Windows.Forms;
 using System.Drawing;
 using System.Drawing.Design;
-
-
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using System.IO;
 
 namespace PasteApp
 {
     public partial class CopyDialog : Form
     {
+        private Stopwatch stopwatch = new Stopwatch();
+
         private TableLayoutPanel tlp;
         private Label lblDescription;
         private TableLayoutPanel tlpHorizontal;
@@ -26,11 +29,124 @@ namespace PasteApp
         private Label lblCurrentFileName;
         private Label lblTimeRemaining;
         private Label lblItemsRemaining;
-        
-      
-        public CopyDialog()
+
+        private readonly long totalFileCount;
+        private readonly long totalFileSize;
+        private long filesProcessed;
+        private long bytesCopied;
+        private double speed;
+
+        private double currentFilePercentage;
+        private long currentFileSize;
+        private string currentFile;
+       
+
+        private Regex reNewFile = new Regex(@"\s*(\d+)\s+(.+)", RegexOptions.Compiled);
+        private Regex rePercUpdate = new Regex(@"\s*(\d{1,3}(\.\d)?)%", RegexOptions.Compiled);
+    
+        public CopyDialog(long totalFileCount, long totalFileSize, string sourceDir, string destDir)
         {
+            this.totalFileCount = totalFileCount;
+            this.totalFileSize = totalFileSize;
+            this.filesProcessed = 0;
+            this.bytesCopied = 0;
+            this.currentFilePercentage = 0;
+            this.currentFileSize = 0;
+            this.speed = 0.00001;
+
             InitializeComponent();
+            InitializeLabels(totalFileCount, totalFileSize, sourceDir, destDir);
+            stopwatch.Start();
+        }
+
+        public void RobocopyOutputHandler(object sendingProcess, DataReceivedEventArgs outLine)
+        {
+            if (outLine.Data == null)
+                return;
+
+            Match m;
+
+            // Check if new file is being processed.
+            m = reNewFile.Match(outLine.Data);
+            if (m.Success && File.Exists(m.Groups[2].Value))
+            {
+                currentFileSize = Convert.ToInt64(m.Groups[1].Value);
+                currentFilePercentage = 0;
+                currentFile = m.Groups[2].Value;
+                lblCurrentFileName.Text = "Name: " + currentFile;
+
+                File.AppendAllText(@"E:\OBRISATI\Destination\copyDialogDebug.txt", "" + currentFile + Environment.NewLine);
+            }
+
+            // Check if file percentage is updated.
+            m = rePercUpdate.Match(outLine.Data);
+            if (m.Success)
+            {
+                double currentFilePercentage = Convert.ToDouble(m.Groups[1].Value);
+                long filesRemaining;
+                long bytesRemaining;
+                long newPercentage;
+                long timeRemaining;
+
+                if (Math.Abs(currentFilePercentage - 100.0) < 0.0001)
+                {
+                    filesProcessed++;
+                    bytesCopied += currentFileSize;
+
+                    filesRemaining = totalFileCount - filesProcessed;
+                    bytesRemaining = totalFileSize - bytesCopied;
+                    newPercentage = (long)Math.Round(100.0 * bytesCopied / totalFileSize);
+                    speed = 0.00001 + bytesCopied * 1000.0 / (1024 * 1024) / stopwatch.ElapsedMilliseconds; // Speed in MB/s       
+                    timeRemaining = (long)(bytesRemaining / (speed * 1024 * 1024));
+
+                }
+                else
+                {
+                    filesRemaining = totalFileCount - filesProcessed;
+                    bytesRemaining = totalFileSize - bytesCopied - (long)(currentFilePercentage / 100 * currentFileSize);
+                    newPercentage = (long)Math.Round(100.0 * (totalFileSize - bytesRemaining) / totalFileSize);
+                    speed = 0.00001 + (totalFileSize - bytesRemaining) * 1000.0 / (1024 * 1024) / stopwatch.ElapsedMilliseconds; // Speed in MB/s 
+                    timeRemaining = (long)(bytesRemaining / (speed * 1024 * 1024));
+
+                }
+
+                /*
+                File.AppendAllText(@"E:\OBRISATI\Destination\copyDialogDebug.txt", "" + currentFilePercentage + Environment.NewLine);
+                File.AppendAllText(@"E:\OBRISATI\Destination\copyDialogDebug.txt", "Time remaining: " + timeRemaining + Environment.NewLine);
+                File.AppendAllText(@"E:\OBRISATI\Destination\copyDialogDebug.txt", "Bytes remaining: " + bytesRemaining + Environment.NewLine);
+                File.AppendAllText(@"E:\OBRISATI\Destination\copyDialogDebug.txt", "Speed: " + speed + Environment.NewLine);
+                */
+
+                lblItemsRemaining.Text = "Items remaining: " + filesRemaining + " (" + bytesRemaining + "B)";
+                this.Text = newPercentage + "% complete";
+                lblPercentage.Text = this.Text;
+                pbProgressBar.Value = Convert.ToInt32(newPercentage);
+                lblSpeed.Text = "Speed: " + string.Format("{0:0.0}", speed) + " MB/s";
+                lblTimeRemaining.Text = "Time remaining: " + timeRemaining + " seconds";
+
+            }
+
+            this.Refresh();
+        }
+
+        public void RobocopyErrorHandler(object sendingProcess, DataReceivedEventArgs outLine)
+        {
+            // TODO
+            if (outLine.Data == null)
+                return;
+
+            this.Refresh();
+        }
+
+        public void InitializeLabels(long fileCount, long totalFileSize, string sourceDir, string destDir)
+        {
+            this.lblDescription.Text = "Copying " + fileCount + " items from " + sourceDir + " to " + destDir;
+            this.lblPercentage.Text = "0% complete";
+            this.Text = this.lblPercentage.Text;
+            this.lblItemsRemaining.Text = "Items remaining: " + fileCount + "(" + totalFileSize + "B)";
+            this.lblTimeRemaining.Text = "Time remaining:";
+            this.lblCurrentFileName.Text = "Name: ";
+            this.lblSpeed.Text = "Speed: ";
         }
 
         private void InitializeComponent()
@@ -81,9 +197,9 @@ namespace PasteApp
             this.lblDescription.Location = new System.Drawing.Point(3, 5);
             this.lblDescription.Margin = new System.Windows.Forms.Padding(3, 5, 3, 0);
             this.lblDescription.Name = "lblDescription";
-            this.lblDescription.Size = new System.Drawing.Size(113, 13);
+            this.lblDescription.Size = new System.Drawing.Size(10, 13);
             this.lblDescription.TabIndex = 0;
-            this.lblDescription.Text = "Copying items from  to ";
+            this.lblDescription.Text = " ";
             // 
             // pbProgressBar
             // 
@@ -92,6 +208,7 @@ namespace PasteApp
             this.pbProgressBar.Name = "pbProgressBar";
             this.pbProgressBar.Size = new System.Drawing.Size(394, 21);
             this.pbProgressBar.TabIndex = 2;
+            this.pbProgressBar.Maximum = 100; // 100%
             // 
             // lblCurrentFileName
             // 
@@ -146,9 +263,9 @@ namespace PasteApp
             this.lblPercentage.Location = new System.Drawing.Point(3, 8);
             this.lblPercentage.Margin = new System.Windows.Forms.Padding(3, 8, 3, 0);
             this.lblPercentage.Name = "lblPercentage";
-            this.lblPercentage.Size = new System.Drawing.Size(100, 18);
+            this.lblPercentage.Size = new System.Drawing.Size(200, 18);
             this.lblPercentage.TabIndex = 1;
-            this.lblPercentage.Text = "% complete";
+            this.lblPercentage.Text = "0% complete";
             // 
             // btnPause
             // 
