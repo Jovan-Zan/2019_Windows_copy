@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
+using ClipboardApp;
 
 namespace CopyApp
 {
@@ -58,7 +59,7 @@ namespace CopyApp
             string outputFileDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), productName);
             string outputFile = Path.Combine(outputFileDirectory, "filesToCopy.out");
             Directory.CreateDirectory(outputFileDirectory);
-
+            
             // Used for debbuging.
             Debug.Listeners.Add(new TextWriterTraceListener(Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), productName, "debug.log")));
