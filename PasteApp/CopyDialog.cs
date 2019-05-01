@@ -39,7 +39,6 @@ namespace PasteApp
         private double currentFilePercentage;
         private long currentFileSize;
         private string currentFile;
-       
 
         private Regex reNewFile = new Regex(@"\s*(\d+)\s+(.+)", RegexOptions.Compiled);
         private Regex rePercUpdate = new Regex(@"\s*(\d{1,3}(\.\d)?)%", RegexOptions.Compiled);
@@ -53,6 +52,7 @@ namespace PasteApp
             this.currentFilePercentage = 0;
             this.currentFileSize = 0;
             this.speed = 0.00001;
+            this.pbProgressBar.Maximum = 100; // 100%
 
             InitializeComponent();
             InitializeLabels(totalFileCount, totalFileSize, sourceDir, destDir);
@@ -117,16 +117,54 @@ namespace PasteApp
                 File.AppendAllText(@"E:\OBRISATI\Destination\copyDialogDebug.txt", "Speed: " + speed + Environment.NewLine);
                 */
 
-                lblItemsRemaining.Text = "Items remaining: " + filesRemaining + " (" + bytesRemaining + "B)";
+                lblItemsRemaining.Text = "Items remaining: " + filesRemaining + " (" + BytesCompactForm(bytesRemaining) + ")";
                 this.Text = newPercentage + "% complete";
                 lblPercentage.Text = this.Text;
                 pbProgressBar.Value = Convert.ToInt32(newPercentage);
-                lblSpeed.Text = "Speed: " + string.Format("{0:0.0}", speed) + " MB/s";
+                lblSpeed.Text = "Speed: " + SpeedCompactForm(speed);
                 lblTimeRemaining.Text = "Time remaining: " + timeRemaining + " seconds";
 
             }
 
             this.Refresh();
+        }
+
+        private String SpeedCompactForm(double speedInBytes)
+        {
+            long orderOfMagnitude = 1;
+            if (speedInBytes < orderOfMagnitude * 1024)
+                return "" + speedInBytes / orderOfMagnitude + " B/s";
+            orderOfMagnitude *= 1024;
+            if (speedInBytes < orderOfMagnitude * 1024) 
+                return "" + string.Format("{0:0.00}", speedInBytes / orderOfMagnitude) + " KB/s";
+            orderOfMagnitude *= 1024;
+            if (speedInBytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", speedInBytes / orderOfMagnitude) + " MB/s";
+            orderOfMagnitude *= 1024;
+            if (speedInBytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", speedInBytes / orderOfMagnitude) + "GB/s";
+            orderOfMagnitude *= 1024;
+            return "" + string.Format("{0:0.00}", speedInBytes / orderOfMagnitude) + "TB/s";
+
+        }
+
+
+        private String BytesCompactForm(long bytes)
+        {
+            long orderOfMagnitude = 1;
+            if (bytes < orderOfMagnitude * 1024)
+                return "" + bytes / orderOfMagnitude + "B";
+            orderOfMagnitude *= 1024;
+            if (bytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "KB";
+            orderOfMagnitude *= 1024;
+            if (bytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "MB";
+            orderOfMagnitude *= 1024;
+            if (bytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "GB";
+            orderOfMagnitude *= 1024;
+            return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "TB";
         }
 
         public void RobocopyErrorHandler(object sendingProcess, DataReceivedEventArgs outLine)
@@ -143,7 +181,7 @@ namespace PasteApp
             this.lblDescription.Text = "Copying " + fileCount + " items from " + sourceDir + " to " + destDir;
             this.lblPercentage.Text = "0% complete";
             this.Text = this.lblPercentage.Text;
-            this.lblItemsRemaining.Text = "Items remaining: " + fileCount + "(" + totalFileSize + "B)";
+            this.lblItemsRemaining.Text = "Items remaining: " + fileCount + "(" + BytesCompactForm(totalFileSize) + ")";
             this.lblTimeRemaining.Text = "Time remaining:";
             this.lblCurrentFileName.Text = "Name: ";
             this.lblSpeed.Text = "Speed: ";
@@ -151,7 +189,6 @@ namespace PasteApp
 
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(CopyDialog));
             this.tlp = new System.Windows.Forms.TableLayoutPanel();
             this.lblDescription = new System.Windows.Forms.Label();
             this.pbProgressBar = new System.Windows.Forms.ProgressBar();
@@ -160,9 +197,9 @@ namespace PasteApp
             this.lblItemsRemaining = new System.Windows.Forms.Label();
             this.tlpHorizontal = new System.Windows.Forms.TableLayoutPanel();
             this.lblPercentage = new System.Windows.Forms.Label();
+            this.lblSpeed = new System.Windows.Forms.Label();
             this.btnPause = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
-            this.lblSpeed = new System.Windows.Forms.Label();
             this.tlp.SuspendLayout();
             this.tlpHorizontal.SuspendLayout();
             this.SuspendLayout();
@@ -208,7 +245,6 @@ namespace PasteApp
             this.pbProgressBar.Name = "pbProgressBar";
             this.pbProgressBar.Size = new System.Drawing.Size(394, 21);
             this.pbProgressBar.TabIndex = 2;
-            this.pbProgressBar.Maximum = 100; // 100%
             // 
             // lblCurrentFileName
             // 
@@ -267,26 +303,6 @@ namespace PasteApp
             this.lblPercentage.TabIndex = 1;
             this.lblPercentage.Text = "0% complete";
             // 
-            // btnPause
-            // 
-            this.btnPause.Image = ((System.Drawing.Image)(resources.GetObject("btnPause.Image")));
-            this.btnPause.Location = new System.Drawing.Point(294, 5);
-            this.btnPause.Margin = new System.Windows.Forms.Padding(5, 5, 3, 3);
-            this.btnPause.Name = "btnPause";
-            this.btnPause.Size = new System.Drawing.Size(25, 25);
-            this.btnPause.TabIndex = 2;
-            this.btnPause.UseVisualStyleBackColor = true;
-            // 
-            // btnCancel
-            // 
-            this.btnCancel.Image = ((System.Drawing.Image)(resources.GetObject("btnCancel.Image")));
-            this.btnCancel.Location = new System.Drawing.Point(364, 5);
-            this.btnCancel.Margin = new System.Windows.Forms.Padding(5, 5, 3, 3);
-            this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(25, 25);
-            this.btnCancel.TabIndex = 3;
-            this.btnCancel.UseVisualStyleBackColor = true;
-            // 
             // lblSpeed
             // 
             this.lblSpeed.AutoSize = true;
@@ -296,6 +312,26 @@ namespace PasteApp
             this.lblSpeed.Size = new System.Drawing.Size(44, 13);
             this.lblSpeed.TabIndex = 8;
             this.lblSpeed.Text = "Speed: ";
+            // 
+            // btnPause
+            // 
+            this.btnPause.Image = global::PasteApp.Properties.Resources.PauseIcon;
+            this.btnPause.Location = new System.Drawing.Point(294, 5);
+            this.btnPause.Margin = new System.Windows.Forms.Padding(5, 5, 3, 3);
+            this.btnPause.Name = "btnPause";
+            this.btnPause.Size = new System.Drawing.Size(25, 25);
+            this.btnPause.TabIndex = 2;
+            this.btnPause.UseVisualStyleBackColor = true;
+            // 
+            // btnCancel
+            // 
+            this.btnCancel.Image = global::PasteApp.Properties.Resources.CancelIcon;
+            this.btnCancel.Location = new System.Drawing.Point(364, 5);
+            this.btnCancel.Margin = new System.Windows.Forms.Padding(5, 5, 3, 3);
+            this.btnCancel.Name = "btnCancel";
+            this.btnCancel.Size = new System.Drawing.Size(25, 25);
+            this.btnCancel.TabIndex = 3;
+            this.btnCancel.UseVisualStyleBackColor = true;
             // 
             // CopyDialog
             // 
