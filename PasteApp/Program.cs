@@ -62,12 +62,12 @@ namespace PasteApp
                     CloseHandle(pOpenThread);
                 }
 
-                Debug.WriteLine(CurrentTime() + " [ERROR] Process " + process.ProcessName + "with id " + process.Id + " suspended.");
+                Debug.WriteLine(CurrentTime() + "Process " + process.ProcessName + "with id " + process.Id + " suspended.");
             }
             catch (ArgumentException e)
             {
                 // Process has already ended
-                Debug.WriteLine(CurrentTime() + e.Message + Environment.NewLine + e.StackTrace);
+                Debug.WriteLine(CurrentTime() + " [ERROR] " + e.Message + Environment.NewLine + e.StackTrace);
             }
         }
 
@@ -98,12 +98,12 @@ namespace PasteApp
                     CloseHandle(pOpenThread);
                 }
 
-                Debug.WriteLine(CurrentTime() + " [ERROR] Process " + process.ProcessName + "with id " + process.Id + " resumed.");
+                Debug.WriteLine(CurrentTime() + "Process " + process.ProcessName + "with id " + process.Id + " resumed.");
             }
             catch (ArgumentException e)
             {
                 // Process has already ended
-                Debug.WriteLine(CurrentTime() + e.Message + Environment.NewLine + e.StackTrace);
+                Debug.WriteLine(CurrentTime() + " [ERROR] " + e.Message + Environment.NewLine + e.StackTrace);
             }
 }
 

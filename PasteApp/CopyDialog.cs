@@ -42,7 +42,9 @@ namespace PasteApp
 
         private Regex reNewFile = new Regex(@"\s*(\d+)\s+(.+)", RegexOptions.Compiled);
         private Regex rePercUpdate = new Regex(@"\s*(\d{1,3}(\.\d)?)%", RegexOptions.Compiled);
-    
+
+        private bool isPaused = false;
+
         public CopyDialog(long totalFileCount, long totalFileSize, string sourceDir, string destDir)
         {
             this.totalFileCount = totalFileCount;
@@ -51,8 +53,7 @@ namespace PasteApp
             this.bytesCopied = 0;
             this.currentFilePercentage = 0;
             this.currentFileSize = 0;
-            this.speed = 0.00001;
-            this.pbProgressBar.Maximum = 100; // 100%
+            this.speed = 0.00001;            
 
             InitializeComponent();
             InitializeLabels(totalFileCount, totalFileSize, sourceDir, destDir);
@@ -96,8 +97,8 @@ namespace PasteApp
                     filesRemaining = totalFileCount - filesProcessed;
                     bytesRemaining = totalFileSize - bytesCopied;
                     newPercentage = (long)Math.Round(100.0 * bytesCopied / totalFileSize);
-                    speed = 0.00001 + bytesCopied * 1000.0 / (1024 * 1024) / stopwatch.ElapsedMilliseconds; // Speed in MB/s       
-                    timeRemaining = (long)(bytesRemaining / (speed * 1024 * 1024));
+                    speed = 0.00001 + (bytesCopied * 1000.0 / stopwatch.ElapsedMilliseconds); // Speed in B/s       
+                    timeRemaining = (long)(bytesRemaining / speed);
 
                 }
                 else
@@ -105,17 +106,10 @@ namespace PasteApp
                     filesRemaining = totalFileCount - filesProcessed;
                     bytesRemaining = totalFileSize - bytesCopied - (long)(currentFilePercentage / 100 * currentFileSize);
                     newPercentage = (long)Math.Round(100.0 * (totalFileSize - bytesRemaining) / totalFileSize);
-                    speed = 0.00001 + (totalFileSize - bytesRemaining) * 1000.0 / (1024 * 1024) / stopwatch.ElapsedMilliseconds; // Speed in MB/s 
-                    timeRemaining = (long)(bytesRemaining / (speed * 1024 * 1024));
+                    speed = 0.00001 + ((totalFileSize - bytesRemaining) * 1000.0 / stopwatch.ElapsedMilliseconds); // Speed in B/s 
+                    timeRemaining = (long)(bytesRemaining / speed);
 
                 }
-
-                /*
-                File.AppendAllText(@"E:\OBRISATI\Destination\copyDialogDebug.txt", "" + currentFilePercentage + Environment.NewLine);
-                File.AppendAllText(@"E:\OBRISATI\Destination\copyDialogDebug.txt", "Time remaining: " + timeRemaining + Environment.NewLine);
-                File.AppendAllText(@"E:\OBRISATI\Destination\copyDialogDebug.txt", "Bytes remaining: " + bytesRemaining + Environment.NewLine);
-                File.AppendAllText(@"E:\OBRISATI\Destination\copyDialogDebug.txt", "Speed: " + speed + Environment.NewLine);
-                */
 
                 lblItemsRemaining.Text = "Items remaining: " + filesRemaining + " (" + BytesCompactForm(bytesRemaining) + ")";
                 this.Text = newPercentage + "% complete";
@@ -133,7 +127,7 @@ namespace PasteApp
         {
             long orderOfMagnitude = 1;
             if (speedInBytes < orderOfMagnitude * 1024)
-                return "" + speedInBytes / orderOfMagnitude + " B/s";
+                return "" + string.Format("{0:0.00}", speedInBytes) + " B/s";
             orderOfMagnitude *= 1024;
             if (speedInBytes < orderOfMagnitude * 1024) 
                 return "" + string.Format("{0:0.00}", speedInBytes / orderOfMagnitude) + " KB/s";
@@ -153,7 +147,7 @@ namespace PasteApp
         {
             long orderOfMagnitude = 1;
             if (bytes < orderOfMagnitude * 1024)
-                return "" + bytes / orderOfMagnitude + "B";
+                return "" + string.Format("{0:0.00}", bytes) + "B";
             orderOfMagnitude *= 1024;
             if (bytes < orderOfMagnitude * 1024)
                 return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "KB";
@@ -185,6 +179,7 @@ namespace PasteApp
             this.lblTimeRemaining.Text = "Time remaining:";
             this.lblCurrentFileName.Text = "Name: ";
             this.lblSpeed.Text = "Speed: ";
+            this.pbProgressBar.Maximum = 100; // 100%
         }
 
         private void InitializeComponent()
@@ -351,12 +346,23 @@ namespace PasteApp
 
         private void btnPause_Click(object sender, EventArgs e)
         {
-            Program.PauseCopying();
+            if (isPaused == false)
+            {
+                Program.PauseCopying();
+                isPaused = true;
+                btnPause.Image = Properties.Resources.ResumeIcon;
+            }
+            else
+            {
+                Program.ResumeCopying();
+                isPaused = false;
+                btnPause.Image = Properties.Resources.PauseIcon;
+            }
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            Program.ResumeCopying();
+       
         }
     }
 }
