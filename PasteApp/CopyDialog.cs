@@ -75,8 +75,6 @@ namespace PasteApp
                 currentFilePercentage = 0;
                 currentFile = m.Groups[2].Value;
                 lblCurrentFileName.Text = "Name: " + currentFile;
-
-                File.AppendAllText(@"E:\OBRISATI\Destination\copyDialogDebug.txt", "" + currentFile + Environment.NewLine);
             }
 
             // Check if file percentage is updated.
@@ -192,9 +190,9 @@ namespace PasteApp
             this.lblItemsRemaining = new System.Windows.Forms.Label();
             this.tlpHorizontal = new System.Windows.Forms.TableLayoutPanel();
             this.lblPercentage = new System.Windows.Forms.Label();
-            this.lblSpeed = new System.Windows.Forms.Label();
             this.btnPause = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
+            this.lblSpeed = new System.Windows.Forms.Label();
             this.tlp.SuspendLayout();
             this.tlpHorizontal.SuspendLayout();
             this.SuspendLayout();
@@ -298,16 +296,6 @@ namespace PasteApp
             this.lblPercentage.TabIndex = 1;
             this.lblPercentage.Text = "0% complete";
             // 
-            // lblSpeed
-            // 
-            this.lblSpeed.AutoSize = true;
-            this.lblSpeed.Location = new System.Drawing.Point(3, 102);
-            this.lblSpeed.Margin = new System.Windows.Forms.Padding(3, 5, 3, 0);
-            this.lblSpeed.Name = "lblSpeed";
-            this.lblSpeed.Size = new System.Drawing.Size(44, 13);
-            this.lblSpeed.TabIndex = 8;
-            this.lblSpeed.Text = "Speed: ";
-            // 
             // btnPause
             // 
             this.btnPause.Image = global::PasteApp.Properties.Resources.PauseIcon;
@@ -330,6 +318,16 @@ namespace PasteApp
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             // 
+            // lblSpeed
+            // 
+            this.lblSpeed.AutoSize = true;
+            this.lblSpeed.Location = new System.Drawing.Point(3, 102);
+            this.lblSpeed.Margin = new System.Windows.Forms.Padding(3, 5, 3, 0);
+            this.lblSpeed.Name = "lblSpeed";
+            this.lblSpeed.Size = new System.Drawing.Size(44, 13);
+            this.lblSpeed.TabIndex = 8;
+            this.lblSpeed.Text = "Speed: ";
+            // 
             // CopyDialog
             // 
             this.ClientSize = new System.Drawing.Size(450, 210);
@@ -337,6 +335,7 @@ namespace PasteApp
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Name = "CopyDialog";
             this.Text = "0% complete";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.CopyDialog_FormClosing);
             this.tlp.ResumeLayout(false);
             this.tlp.PerformLayout();
             this.tlpHorizontal.ResumeLayout(false);
@@ -362,8 +361,46 @@ namespace PasteApp
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
-       
+            Program.PauseCopying();
+
+            var result = MessageBox.Show(
+                "Are you sure you wish to abort copying operation?", 
+                "Confirmation", 
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result == DialogResult.Yes)
+            {
+                Program.AbortCopying();
+                Application.Exit();
+            }
+            else
+                Program.ResumeCopying();
         }
+
+        private void CopyDialog_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Program.PauseCopying();
+
+            var result = MessageBox.Show(
+                "Are you sure you wish to abort copying operation?",
+                "Confirmation",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result == DialogResult.Yes)
+            {
+                Program.AbortCopying();
+                Application.Exit();
+            }
+            else
+            {
+                // Prevent from from closing.
+                e.Cancel = true;
+                Program.ResumeCopying();
+            }
+        }
+
     }
 }
 

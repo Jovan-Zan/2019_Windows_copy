@@ -109,6 +109,8 @@ namespace PasteApp
 
         private static readonly string productName = "MultithreadWindowsCopy";
         private static int currentRobocopyProcessId = 0;
+        private static bool operationAborted = false;
+
 
         public static void PauseCopying()
         {
@@ -120,6 +122,20 @@ namespace PasteApp
            ResumeProcess(currentRobocopyProcessId);
         }
 
+        public static void AbortCopying()
+        {
+            try
+            {
+                operationAborted = true;
+                var process = Process.GetProcessById(currentRobocopyProcessId);
+                process.Kill();
+            }
+            catch (ArgumentException e)
+            {
+                // Process has already ended
+                Debug.WriteLine(CurrentTime() + " [ERROR] " + e.Message + Environment.NewLine + e.StackTrace);
+            }
+        }
 
         /// <summary>
         /// Extracts paths of folders and files which are to be copied.
@@ -311,6 +327,11 @@ namespace PasteApp
             // Run robocopy script
             // For each robocopy command, a new robocopy.exe must be started.
             foreach (string command in commands) {
+                if (operationAborted == true)
+                {
+                    Debug.WriteLine(CurrentTime() + "PasteApp aborted.");
+                    return;
+                }
                 using (Process p = new Process())
                 {
                     p.StartInfo.FileName = "robocopy.exe";
@@ -332,7 +353,6 @@ namespace PasteApp
                     p.BeginOutputReadLine();
                     p.BeginErrorReadLine();
                     currentRobocopyProcessId = p.Id;
-
 
                     p.WaitForExit();
                 }
