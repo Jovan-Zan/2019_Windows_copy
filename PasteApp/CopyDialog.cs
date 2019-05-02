@@ -95,7 +95,7 @@ namespace PasteApp
                     filesRemaining = totalFileCount - filesProcessed;
                     bytesRemaining = totalFileSize - bytesCopied;
                     newPercentage = (long)Math.Round(100.0 * bytesCopied / totalFileSize);
-                    speed = 0.00001 + (bytesCopied * 1000.0 / stopwatch.ElapsedMilliseconds); // Speed in B/s       
+                    speed = 0.00001 + (bytesCopied * 1000.0 / stopwatch.ElapsedMilliseconds); // Speed in B/s    
                     timeRemaining = (long)(bytesRemaining / speed);
 
                 }
@@ -114,14 +114,32 @@ namespace PasteApp
                 lblPercentage.Text = this.Text;
                 pbProgressBar.Value = Convert.ToInt32(newPercentage);
                 lblSpeed.Text = "Speed: " + SpeedCompactForm(speed);
-                lblTimeRemaining.Text = "Time remaining: " + timeRemaining + " seconds";
+                lblTimeRemaining.Text = "Time remaining: About " + TimeRemainingCompactForm(timeRemaining);
 
             }
 
             this.Refresh();
         }
 
-        private String SpeedCompactForm(double speedInBytes)
+        private string BytesCompactForm(long bytes)
+        {
+            long orderOfMagnitude = 1;
+            if (bytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", bytes) + "B";
+            orderOfMagnitude *= 1024;
+            if (bytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "KB";
+            orderOfMagnitude *= 1024;
+            if (bytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "MB";
+            orderOfMagnitude *= 1024;
+            if (bytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "GB";
+            orderOfMagnitude *= 1024;
+            return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "TB";
+        }
+
+        private string SpeedCompactForm(double speedInBytes)
         {
             long orderOfMagnitude = 1;
             if (speedInBytes < orderOfMagnitude * 1024)
@@ -140,23 +158,18 @@ namespace PasteApp
 
         }
 
-
-        private String BytesCompactForm(long bytes)
+        private string TimeRemainingCompactForm(long timeRemaining)
         {
-            long orderOfMagnitude = 1;
-            if (bytes < orderOfMagnitude * 1024)
-                return "" + string.Format("{0:0.00}", bytes) + "B";
-            orderOfMagnitude *= 1024;
-            if (bytes < orderOfMagnitude * 1024)
-                return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "KB";
-            orderOfMagnitude *= 1024;
-            if (bytes < orderOfMagnitude * 1024)
-                return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "MB";
-            orderOfMagnitude *= 1024;
-            if (bytes < orderOfMagnitude * 1024)
-                return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "GB";
-            orderOfMagnitude *= 1024;
-            return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "TB";
+            TimeSpan ts = TimeSpan.FromSeconds(timeRemaining);
+            if (ts.TotalDays >= 1)
+                return "" + ts.Days + " days and " + ts.Hours + " hours";
+            else if (ts.Hours != 0)
+                return "" + ts.Hours + " hours and " + ts.Minutes + " minutes";
+            else if (ts.Minutes != 0)
+                return "" + ts.Minutes + " minutes";
+            else
+                return "" + ts.Seconds + " seconds";
+
         }
 
         public void RobocopyErrorHandler(object sendingProcess, DataReceivedEventArgs outLine)
@@ -348,12 +361,14 @@ namespace PasteApp
             if (isPaused == false)
             {
                 Program.PauseCopying();
+                stopwatch.Stop();
                 isPaused = true;
                 btnPause.Image = Properties.Resources.ResumeIcon;
             }
             else
             {
                 Program.ResumeCopying();
+                stopwatch.Start();
                 isPaused = false;
                 btnPause.Image = Properties.Resources.PauseIcon;
             }
@@ -362,6 +377,7 @@ namespace PasteApp
         private void btnCancel_Click(object sender, EventArgs e)
         {
             Program.PauseCopying();
+            stopwatch.Stop();
 
             var result = MessageBox.Show(
                 "Are you sure you wish to abort copying operation?", 
@@ -375,7 +391,10 @@ namespace PasteApp
                 Application.Exit();
             }
             else
+            {
                 Program.ResumeCopying();
+                stopwatch.Start();
+            }
         }
 
         private void CopyDialog_FormClosing(object sender, FormClosingEventArgs e)
