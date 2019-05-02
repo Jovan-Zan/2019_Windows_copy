@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
+using ClipboardApp;
 
 namespace CopyApp
 {
@@ -36,6 +38,9 @@ namespace CopyApp
 
         private static readonly string productName = "MultithreadWindowsCopy";
 
+        // HARDCODED!!!
+        private static string clipboardAppLocation = @"C:\Users\Master\Documents\GitHub\Windows_copy\ClipboardApp\bin\Debug\ClipboardApp.exe";
+
         /// <summary>
         /// Formatted current time.
         /// </summary>
@@ -54,10 +59,17 @@ namespace CopyApp
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            // Used to store paths to files and folders selected for copying.
-            string outputFileDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), productName);
-            string outputFile = Path.Combine(outputFileDirectory, "filesToCopy.out");
-            Directory.CreateDirectory(outputFileDirectory);
+            // Start ClipboardApp.exe
+            if (Process.GetProcessesByName("ClipboardApp.exe").Length == 0)
+            {
+                Process clipboardApp = new Process();
+                clipboardApp.StartInfo.FileName = clipboardAppLocation;
+                clipboardApp.StartInfo.CreateNoWindow = true;
+                clipboardApp.StartInfo.UseShellExecute = false;
+                clipboardApp.Start();
+
+                Debug.WriteLine(CurrentTime() + " ClipboardApp started, ClipboardAppName = " + clipboardApp.ProcessName);
+            }
 
             // Used for debbuging.
             Debug.Listeners.Add(new TextWriterTraceListener(Path.Combine(
@@ -65,59 +77,62 @@ namespace CopyApp
             Debug.AutoFlush = true;
 
             Debug.WriteLine(Environment.NewLine + CurrentTime() + "CopyApp started");
+            
+            IntPtr foregroundWindowHandle = GetForegroundWindow();
+            IntPtr desktopWindowHandle = GetDesktopWindow();
 
-            using (StreamWriter outputStream = new StreamWriter(outputFile, false))
+            // Flag used to determine where CopyApp was called from Explorer window
+            // or straight from Desktop.
+            bool copyingFromExplorerWindow = false;
+
+            Debug.WriteLine(CurrentTime() + "Foreground window handle AS IntPtr: " + foregroundWindowHandle);
+            Debug.WriteLine(CurrentTime() + "Foreground window handle AS int: " + foregroundWindowHandle.ToInt32());
+
+            foreach (SHDocVw.InternetExplorer window in new SHDocVw.ShellWindows())
             {
-                IntPtr foregroundWindowHandle = GetForegroundWindow();
-                IntPtr desktopWindowHandle = GetDesktopWindow();
+                // Debug information.
+                Debug.WriteLine(CurrentTime() + "Found new explorer window:");
+                Debug.Indent();
+                Debug.WriteLine("LocationName: " + window.LocationName);
+                Debug.WriteLine("Path: " + window.Path);
+                Debug.WriteLine("Handle: " + window.HWND);
 
-                // Flag used to determine where CopyApp was called from Explorer window
-                // or straight from Desktop.
-                bool copyingFromExplorerWindow = false;
-
-                Debug.WriteLine(CurrentTime() + "Foreground window handle AS IntPtr: " + foregroundWindowHandle);
-                Debug.WriteLine(CurrentTime() + "Foreground window handle AS int: " + foregroundWindowHandle.ToInt32());
-
-                foreach (SHDocVw.InternetExplorer window in new SHDocVw.ShellWindows())
+                if (window.HWND == (int)foregroundWindowHandle)
                 {
-                    // Debug information.
-                    Debug.WriteLine(CurrentTime() + "Found new explorer window:");
+                    copyingFromExplorerWindow = true;
+                    List<string> filesToCopy = new List<string>();
+
+                    filesToCopy.Add(((Shell32.IShellFolderViewDual2)window.Document).Folder.Items().Item().Path);
+
+                    Debug.WriteLine("Found foreground folder.");
+                    Debug.WriteLine("Found items: ");
+
                     Debug.Indent();
-                    Debug.WriteLine("LocationName: " + window.LocationName);
-                    Debug.WriteLine("Path: " + window.Path);
-                    Debug.WriteLine("Handle: " + window.HWND);
-
-                    if (window.HWND == (int)foregroundWindowHandle)
+                    Shell32.FolderItems items = ((Shell32.IShellFolderViewDual2)window.Document).SelectedItems();
+                    foreach (Shell32.FolderItem item in items)
                     {
-                        copyingFromExplorerWindow = true;
-
-                        outputStream.WriteLine(((Shell32.IShellFolderViewDual2)window.Document).Folder.Items().Item().Path);
-                        Debug.WriteLine("Found foreground folder.");
-                        Debug.WriteLine("Found items: ");
-
-                        Debug.Indent();
-                        Shell32.FolderItems items = ((Shell32.IShellFolderViewDual2)window.Document).SelectedItems();
-                        foreach (Shell32.FolderItem item in items)
-                        {
-                            outputStream.WriteLine(item.Name);
-                            Debug.WriteLine(item.Name);
-                        }
-                        Debug.Unindent();
+                        filesToCopy.Add(item.Name);
+                        Debug.WriteLine(item.Name);
                     }
+
+                    Clipboard.WriteToMMF(filesToCopy.ToArray());
 
                     Debug.Unindent();
                 }
 
-                if (copyingFromExplorerWindow == false)
-                {
-                  // TODO
-                }
-
-                stopwatch.Stop();
-                Debug.WriteLine(CurrentTime() + "Miliseconds elapsed: " + stopwatch.ElapsedMilliseconds);
-
-                outputStream.Close();
+                Debug.Unindent();
             }
+
+            if (copyingFromExplorerWindow == false)
+            {
+                // TODO
+            }
+
+            stopwatch.Stop();
+            Debug.WriteLine(CurrentTime() + "Miliseconds elapsed: " + stopwatch.ElapsedMilliseconds);
+
+            //outputStream.Close();
+        
 
             // Release the mutex
             oneAppInstanceMutex.ReleaseMutex();
