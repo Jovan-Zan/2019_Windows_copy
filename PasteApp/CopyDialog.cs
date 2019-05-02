@@ -380,24 +380,28 @@ namespace PasteApp
 
         private void CopyDialog_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Program.PauseCopying();
-
-            var result = MessageBox.Show(
-                "Are you sure you wish to abort copying operation?",
-                "Confirmation",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning);
-
-            if (result == DialogResult.Yes)
+            // If the app hasn't finished, prompt a confirmation dialog.
+            if (filesProcessed != totalFileCount)
             {
-                Program.AbortCopying();
-                Application.Exit();
-            }
-            else
-            {
-                // Prevent from from closing.
-                e.Cancel = true;
-                Program.ResumeCopying();
+                Program.PauseCopying();
+
+                var result = MessageBox.Show(
+                    "Are you sure you wish to abort copying operation?",
+                    "Confirmation",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (result == DialogResult.Yes)
+                {
+                    Program.AbortCopying();
+                    Application.Exit();
+                }
+                else
+                {
+                    // Prevent from from closing.
+                    e.Cancel = true;
+                    Program.ResumeCopying();
+                }
             }
         }
 
