@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -106,7 +108,7 @@ namespace PasteApp
                 // Process has already ended
                 Debug.WriteLine(CurrentTime() + " [ERROR] " + e.Message + Environment.NewLine + e.StackTrace);
             }
-}
+        }
 
         private static readonly string productName = "MultithreadWindowsCopy";
         private static int currentRobocopyProcessId = 0;
@@ -138,6 +140,21 @@ namespace PasteApp
             }
         }
 
+        public static string[] ReadFromMMF()
+        {
+            const int mmfMaxSize = 16 * 1024 * 1024;  // allocated memory for this memory mapped file (bytes)
+            const int mmfViewSize = 16 * 1024 * 1024; // how many bytes of the allocated memory can this process access
+
+            MemoryMappedFile mmf = MemoryMappedFile.CreateOrOpen("ClipboardAppMemoryMappedFile", mmfMaxSize, MemoryMappedFileAccess.ReadWrite);
+            MemoryMappedViewStream mmvStream = mmf.CreateViewStream(0, mmfViewSize);
+            BinaryFormatter formatter = new BinaryFormatter();
+
+            string[] lines = (string[])formatter.Deserialize(mmvStream);
+            mmvStream.Seek(0, SeekOrigin.Begin);
+            return lines;
+        }
+
+
         /// <summary>
         /// Extracts paths of folders and files which are to be copied.
         /// /// </summary>
@@ -148,7 +165,7 @@ namespace PasteApp
         private static string[] GetFoldersAndFilesToCopy()
         {
             if (Process.GetProcessesByName("ClipboardApp.exe").Length == 0)
-                return ClipboardApp.Clipboard.ReadFromMMF();
+                return ReadFromMMF();
             else
                 return new string[] { }; // return empty array
         }

@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using ClipboardApp;
 
@@ -37,6 +39,20 @@ namespace CopyApp
         private static readonly Mutex oneAppInstanceMutex = new Mutex(true, @"CopyApp_48031724+Jovan-Zan@users.noreply.github.com");
 
         private static readonly string productName = "MultithreadWindowsCopy";
+
+        public static void WriteToMMF(string[] lines)
+        {
+            const int mmfMaxSize = 16 * 1024 * 1024;  // allocated memory for this memory mapped file (bytes)
+            const int mmfViewSize = 16 * 1024 * 1024; // how many bytes of the allocated memory can this process access
+
+            MemoryMappedFile mmf = MemoryMappedFile.CreateOrOpen("ClipboardAppMemoryMappedFile", mmfMaxSize, MemoryMappedFileAccess.ReadWrite);
+            MemoryMappedViewStream mmvStream = mmf.CreateViewStream(0, mmfViewSize);
+            BinaryFormatter formatter = new BinaryFormatter();
+
+            formatter.Serialize(mmvStream, lines);
+            mmvStream.Seek(0, SeekOrigin.Begin);
+        }
+
 
         // HARDCODED!!!
         private static string clipboardAppLocation = @"C:\Users\toshiba\Desktop\Programske paradigme (PP)\Windows_copy\ClipboardApp\bin\Debug\ClipboardApp.exe";
@@ -117,7 +133,7 @@ namespace CopyApp
                         Debug.WriteLine(item.Name);
                     }
 
-                    Clipboard.WriteToMMF(filesToCopy.ToArray());
+                    WriteToMMF(filesToCopy.ToArray());
 
                     Debug.Unindent();
                 }
