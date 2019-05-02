@@ -39,7 +39,7 @@ namespace CopyApp
         private static readonly string productName = "MultithreadWindowsCopy";
 
         // HARDCODED!!!
-        private static string clipboardAppLocation = @"C:\Users\Master\Documents\GitHub\Windows_copy\ClipboardApp\bin\Debug\ClipboardApp.exe";
+        private static string clipboardAppLocation = @"C:\Users\toshiba\Desktop\Programske paradigme (PP)\Windows_copy\ClipboardApp\bin\Debug\ClipboardApp.exe";
 
         /// <summary>
         /// Formatted current time.
@@ -59,8 +59,15 @@ namespace CopyApp
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
+            // Used for debbuging.
+            Debug.Listeners.Add(new TextWriterTraceListener(Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), productName, "debug.log")));
+            Debug.AutoFlush = true;
+            
+            Debug.WriteLine(Environment.NewLine + CurrentTime() + "CopyApp started");
+
             // Start ClipboardApp.exe
-            if (Process.GetProcessesByName("ClipboardApp.exe").Length == 0)
+            if (Process.GetProcessesByName("ClipboardApp").Length == 0)
             {
                 Process clipboardApp = new Process();
                 clipboardApp.StartInfo.FileName = clipboardAppLocation;
@@ -68,15 +75,8 @@ namespace CopyApp
                 clipboardApp.StartInfo.UseShellExecute = false;
                 clipboardApp.Start();
 
-                Debug.WriteLine(CurrentTime() + " ClipboardApp started, ClipboardAppName = " + clipboardApp.ProcessName);
+                Debug.WriteLine(CurrentTime() + "ClipboardApp started, ClipboardAppName = " + clipboardApp.ProcessName);
             }
-
-            // Used for debbuging.
-            Debug.Listeners.Add(new TextWriterTraceListener(Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), productName, "debug.log")));
-            Debug.AutoFlush = true;
-
-            Debug.WriteLine(Environment.NewLine + CurrentTime() + "CopyApp started");
             
             IntPtr foregroundWindowHandle = GetForegroundWindow();
             IntPtr desktopWindowHandle = GetDesktopWindow();
@@ -88,6 +88,8 @@ namespace CopyApp
             Debug.WriteLine(CurrentTime() + "Foreground window handle AS IntPtr: " + foregroundWindowHandle);
             Debug.WriteLine(CurrentTime() + "Foreground window handle AS int: " + foregroundWindowHandle.ToInt32());
 
+            // Iterate trough explorer windows and find the foreground window.
+            // Get the selected items from the foregound window.
             foreach (SHDocVw.InternetExplorer window in new SHDocVw.ShellWindows())
             {
                 // Debug information.
@@ -127,16 +129,12 @@ namespace CopyApp
             {
                 // TODO
             }
-
-            stopwatch.Stop();
-            Debug.WriteLine(CurrentTime() + "Miliseconds elapsed: " + stopwatch.ElapsedMilliseconds);
-
-            //outputStream.Close();
-        
-
+            
             // Release the mutex
             oneAppInstanceMutex.ReleaseMutex();
 
+            stopwatch.Stop();
+            Debug.WriteLine(CurrentTime() + "Miliseconds elapsed: " + stopwatch.ElapsedMilliseconds);
             Debug.WriteLine(CurrentTime() + "CoppyApp finished.");
         } 
     }

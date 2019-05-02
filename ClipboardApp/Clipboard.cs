@@ -12,8 +12,8 @@ namespace ClipboardApp
 {
     public class Clipboard
     {
-        const int mmfMaxSize = 1024;  // allocated memory for this memory mapped file (bytes)
-        const int mmfViewSize = 1024; // how many bytes of the allocated memory can this process access
+        const int mmfMaxSize = 16 * 1024 * 1024;  // allocated memory for this memory mapped file (bytes)
+        const int mmfViewSize = 16 * 1024 * 1024; // how many bytes of the allocated memory can this process access
 
         private static MemoryMappedFile mmf;
         private static MemoryMappedViewStream mmvStream;
@@ -35,10 +35,10 @@ namespace ClipboardApp
 
         public static void Main(string[] args)
         {
-            mmf = MemoryMappedFile.CreateOrOpen("mmf", mmfMaxSize, MemoryMappedFileAccess.ReadWrite);
+            mmf = MemoryMappedFile.CreateOrOpen("ClipboardAppMemoryMappedFile", mmfMaxSize, MemoryMappedFileAccess.ReadWrite);
             mmvStream = mmf.CreateViewStream(0, mmfViewSize);
             formatter = new BinaryFormatter();
-
+            
             // the memory mapped file lives as long as this process is running
             while (true) ;
         }
