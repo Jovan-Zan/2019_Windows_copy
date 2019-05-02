@@ -131,9 +131,8 @@ namespace PasteApp
         /// </returns>
         private static string[] GetFoldersAndFilesToCopy()
         {
-            string inputFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), productName, "filesToCopy.out");
-            if (File.Exists(inputFile))
-                return File.ReadAllLines(inputFile);
+            if (Process.GetProcessesByName("ClipboardApp.exe").Length == 0)
+                return ClipboardApp.Clipboard.ReadFromMMF();
             else
                 return new string[] { }; // return empty array
         }

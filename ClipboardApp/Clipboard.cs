@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Diagnostics;
 
 namespace ClipboardApp
 {
@@ -18,13 +19,11 @@ namespace ClipboardApp
         private static MemoryMappedViewStream mmvStream;
         private static BinaryFormatter formatter;
 
+        
         public static void WriteToMMF(string [] lines)
         {
-            if (mmf != null)
-                mmf.Dispose();
             formatter.Serialize(mmvStream, lines);
             mmvStream.Seek(0, SeekOrigin.Begin);
-
         }
 
         public static string [] ReadFromMMF()
