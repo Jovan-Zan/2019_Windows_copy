@@ -67,6 +67,10 @@ namespace CopyApp
         
         static void Main(string[] args)
         {
+            // If mutex cannot be aquired exit the app.
+            if (oneAppInstanceMutex.WaitOne(0) == false)
+                return;
+
             string copyOrCutOption;
             try
             {
@@ -78,11 +82,7 @@ namespace CopyApp
                 Debug.WriteLine(e.StackTrace);
                 return;
             }
-
-            // If mutex cannot be aquired exit the app.
-            if (oneAppInstanceMutex.WaitOne(0) == false)
-                return;
-
+            
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
