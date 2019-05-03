@@ -9,7 +9,6 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-using ClipboardApp;
 
 namespace PasteApp
 {
@@ -113,8 +112,8 @@ namespace PasteApp
         private static readonly string productName = "MultithreadWindowsCopy";
         private static int currentRobocopyProcessId = 0;
         private static bool operationAborted = false;
-
-
+        private static string copyOrCutOption;
+        
         public static void PauseCopying()
         {
             SuspendProcess(currentRobocopyProcessId);
@@ -149,11 +148,10 @@ namespace PasteApp
             MemoryMappedViewStream mmvStream = mmf.CreateViewStream(0, mmfViewSize);
             BinaryFormatter formatter = new BinaryFormatter();
 
-            string[] lines = (string[])formatter.Deserialize(mmvStream);
+            string[] lines = (string[]) formatter.Deserialize(mmvStream);
             mmvStream.Seek(0, SeekOrigin.Begin);
             return lines;
         }
-
 
         /// <summary>
         /// Extracts paths of folders and files which are to be copied.
@@ -162,10 +160,14 @@ namespace PasteApp
         /// First string is the path of the root folder of folders and files to be copied.
         /// Remaining strings represent local paths of folders and files. 
         /// </returns>
-        private static string[] GetFoldersAndFilesToCopy()
+        private static string[] GetFoldersAndFilesToCopyOrCut()
         {
             if (Process.GetProcessesByName("ClipboardApp.exe").Length == 0)
-                return ReadFromMMF();
+            {
+                string[] contentFromMMF = ReadFromMMF();
+                copyOrCutOption = contentFromMMF[0];
+                return contentFromMMF.Skip(1).ToArray();
+            }
             else
                 return new string[] { }; // return empty array
         }
@@ -271,7 +273,7 @@ namespace PasteApp
                 return ;
             }
 
-            List<string> fileContents = GetFoldersAndFilesToCopy().ToList<string>();
+            List<string> fileContents = GetFoldersAndFilesToCopyOrCut().ToList<string>();
 
             // There is nothing to copy.
             if (fileContents.Count == 0)
@@ -309,7 +311,7 @@ namespace PasteApp
             // fp - display full file path
             // bytes - display file sizes in bytes
             string options = @"/nc /ndl /fp /bytes";
-
+            
             // Create commands to copy files.
             foreach (string file in files)
             {
@@ -380,6 +382,40 @@ namespace PasteApp
             Debug.WriteLine(CurrentTime() + "PasteApp finished.");
 
             UIThread.Join();
+
+            // needed closing GUI before this
+            // deleting items if requested robo-cut
+            if (copyOrCutOption == "cut")
+            {
+                foreach (string file in files)
+                {
+                    try
+                    {
+                        File.Delete(Path.Combine(root, file));
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.WriteLine(CurrentTime() + "[ERROR]" + e.Message);
+                        Debug.WriteLine(e.StackTrace);
+                        return;
+                    }
+                }
+                    
+                foreach (string folder in folders)
+                {
+                    try
+                    {
+                        Directory.Delete(Path.Combine(root, folder), true);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.WriteLine(CurrentTime() + "[ERROR]" + e.Message);
+                        Debug.WriteLine(e.StackTrace);
+                        return;
+                    }
+                }
+            }
+
         }
 
         private static void P_Exited(object sender, EventArgs e)

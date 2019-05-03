@@ -76,11 +76,5 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ClipboardApp\ClipboardApp.csproj">
-      <Project>{0cfcb628-49a2-4bdd-8fd5-c162426f92e3}</Project>
-      <Name>ClipboardApp</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -6,7 +6,6 @@ using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
-using ClipboardApp;
 
 namespace CopyApp
 {
@@ -68,6 +67,18 @@ namespace CopyApp
         
         static void Main(string[] args)
         {
+            string copyOrCutOption;
+            try
+            {
+                copyOrCutOption = args[0];
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(CurrentTime() + "[ERROR]" + e.Message);
+                Debug.WriteLine(e.StackTrace);
+                return;
+            }
+
             // If mutex cannot be aquired exit the app.
             if (oneAppInstanceMutex.WaitOne(0) == false)
                 return;
@@ -120,6 +131,10 @@ namespace CopyApp
                     copyingFromExplorerWindow = true;
                     List<string> filesToCopy = new List<string>();
 
+                    // "cut" or "copy" option.
+                    filesToCopy.Add(copyOrCutOption);
+                    
+                    // Absolute path of root folder.
                     filesToCopy.Add(((Shell32.IShellFolderViewDual2)window.Document).Folder.Items().Item().Path);
 
                     Debug.WriteLine("Found foreground folder.");
