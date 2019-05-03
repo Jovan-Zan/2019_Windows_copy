@@ -66,7 +66,7 @@ namespace PasteApp
 
                 Debug.WriteLine(CurrentTime() + "Process " + process.ProcessName + "with id " + process.Id + " suspended.");
             }
-            catch (ArgumentException e)
+            catch (Exception e)
             {
                 // Process has already ended
                 Debug.WriteLine(CurrentTime() + " [ERROR] " + e.Message + Environment.NewLine + e.StackTrace);
@@ -102,7 +102,7 @@ namespace PasteApp
 
                 Debug.WriteLine(CurrentTime() + "Process " + process.ProcessName + "with id " + process.Id + " resumed.");
             }
-            catch (ArgumentException e)
+            catch (Exception e)
             {
                 // Process has already ended
                 Debug.WriteLine(CurrentTime() + " [ERROR] " + e.Message + Environment.NewLine + e.StackTrace);
@@ -132,7 +132,7 @@ namespace PasteApp
                 var process = Process.GetProcessById(currentRobocopyProcessId);
                 process.Kill();
             }
-            catch (ArgumentException e)
+            catch (Exception e)
             {
                 // Process has already ended
                 Debug.WriteLine(CurrentTime() + " [ERROR] " + e.Message + Environment.NewLine + e.StackTrace);
