@@ -160,7 +160,10 @@ namespace PasteApp
 
         private string TimeRemainingCompactForm(long timeRemaining)
         {
-            TimeSpan ts = TimeSpan.FromSeconds(timeRemaining);
+            if (timeRemaining >= TimeSpan.MaxValue.TotalSeconds)
+                return String.Format("{0} days", timeRemaining / (60 * 60 * 24));
+
+            TimeSpan ts = TimeSpan.FromSeconds(Convert.ToDouble(timeRemaining));
             if (ts.TotalDays >= 1)
                 return "" + ts.Days + " days and " + ts.Hours + " hours";
             else if (ts.Hours != 0)
@@ -413,7 +416,6 @@ namespace PasteApp
                 if (result == DialogResult.Yes)
                 {
                     Program.AbortCopying();
-                    Application.Exit();
                 }
                 else
                 {

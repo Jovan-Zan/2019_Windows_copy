@@ -1,3 +1,3 @@
 ﻿See: https://stackoverflow.com/questions/20449316/how-add-context-menu-item-to-windows-explorer-for-folders
- Added Robo-Paste command (with "%v" parameter) to:
+ Added Robo-Paste command (with "%v" parameter ("%1" in case there are spaces???)) to:
  Computer\HKEY_CLASSES_ROOT\Directory\Background\shell\
