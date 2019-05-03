@@ -73,6 +73,18 @@ namespace CopyApp
             if (oneAppInstanceMutex.WaitOne(0) == false)
                 return;
 
+            string copyOrCutOption;
+            try
+            {
+                copyOrCutOption = args[0];
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(CurrentTime() + "[ERROR]" + e.Message);
+                Debug.WriteLine(e.StackTrace);
+                return;
+            }
+            
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
@@ -83,7 +95,7 @@ namespace CopyApp
             
             Debug.WriteLine(Environment.NewLine + CurrentTime() + "CopyApp started");
             Debug.WriteLine(CurrentTime() + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
-            // clipboardAppLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "ClipboardApp.exe");
+            clipboardAppLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "ClipboardApp.exe");
 
 
             // Start ClipboardApp.exe
@@ -124,6 +136,10 @@ namespace CopyApp
                     copyingFromExplorerWindow = true;
                     List<string> filesToCopy = new List<string>();
 
+                    // "cut" or "copy" option.
+                    filesToCopy.Add(copyOrCutOption);
+                    
+                    // Absolute path of root folder.
                     filesToCopy.Add(((Shell32.IShellFolderViewDual2)window.Document).Folder.Items().Item().Path);
 
                     Debug.WriteLine("Found foreground folder.");

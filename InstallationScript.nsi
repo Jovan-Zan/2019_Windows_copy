@@ -4,6 +4,7 @@
 
 ;Include Modern UI
 	!include "MUI2.nsh"
+	!include "nsProcess.nsh"
 
 ;------------------------------
 
@@ -86,7 +87,7 @@ SectionEnd
 
 Section "Uninstall"
 ; Kill ClipboardApp.exe before uninstallation and save result in registry R0
-	${nsProcess::KillProcess} "${APP_EXE}" $R0
+	${nsProcess::KillProcess} "ClipboardApp.exe" $R0
 
 ; Delete registry keys and values
 	DeleteRegKey HKLM "Software\${APP_NAME}"
