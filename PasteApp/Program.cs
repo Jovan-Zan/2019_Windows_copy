@@ -9,7 +9,6 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-using ClipboardApp;
 
 namespace PasteApp
 {
@@ -308,17 +307,10 @@ namespace PasteApp
             // ndl - do not display copied directories
             // fp - display full file path
             // bytes - display file sizes in bytes
-            string options = @"/nc /ndl /fp /bytes";
-
-            // Create commands to copy files.
-            foreach (string file in files)
-            {
-                string filePath = Path.Combine(root, file);
-                if (File.Exists(filePath) == true)
-                    commands.Add(QuoteEnclose(root) + " " + QuoteEnclose(destination) + " " + QuoteEnclose(file) + " " + options);
-                else
-                    throw new Exception("The file " + filePath + " doesn't exist!");
-            }
+            // v - verbose output (includes skipped files in the output)
+            // is - include (overwrite) same files
+            // it - include (overwrite) "tweaked" files
+            string options = @"/nc /ndl /fp /bytes /v /is /it";
 
             // Create commands to copy folders.
             foreach (string folder in folders)
@@ -328,6 +320,16 @@ namespace PasteApp
                     commands.Add(QuoteEnclose(folderPath) + " " + QuoteEnclose(Path.Combine(destination, folder)) + " /e" + " " + options);
                 else
                     throw new Exception("The folder " + folderPath + " doesn't exist!");
+            }
+
+            // Create commands to copy files.
+            foreach (string file in files)
+            {
+                string filePath = Path.Combine(root, file);
+                if (File.Exists(filePath) == true)
+                    commands.Add(QuoteEnclose(root) + " " + QuoteEnclose(destination) + " " + QuoteEnclose(file) + " " + options);
+                else
+                    throw new Exception("The file " + filePath + " doesn't exist!");
             }
 
             string copyScript = string.Join(Environment.NewLine, commands.ToArray());

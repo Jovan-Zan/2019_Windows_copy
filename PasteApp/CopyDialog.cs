@@ -116,7 +116,19 @@ namespace PasteApp
                 lblSpeed.Text = "Speed: " + SpeedCompactForm(speed);
                 lblTimeRemaining.Text = "Time remaining: About " + TimeRemainingCompactForm(timeRemaining);
 
+                // When folders and files are copied, close the form. 
+                if (filesProcessed == totalFileCount)
+                    this.Close();
             }
+
+            this.Refresh();
+        }
+
+        public void RobocopyErrorHandler(object sendingProcess, DataReceivedEventArgs outLine)
+        {
+            // TODO
+            if (outLine.Data == null)
+                return;
 
             this.Refresh();
         }
@@ -173,15 +185,6 @@ namespace PasteApp
             else
                 return "" + ts.Seconds + " seconds";
 
-        }
-
-        public void RobocopyErrorHandler(object sendingProcess, DataReceivedEventArgs outLine)
-        {
-            // TODO
-            if (outLine.Data == null)
-                return;
-
-            this.Refresh();
         }
 
         public void InitializeLabels(long fileCount, long totalFileSize, string sourceDir, string destDir)
