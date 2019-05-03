@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.MemoryMappedFiles;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
-using ClipboardApp;
 
 namespace CopyApp
 {
@@ -55,6 +55,7 @@ namespace CopyApp
 
 
         // HARDCODED!!!
+        // Used during development, when apps are in different folders.
         private static string clipboardAppLocation = @"C:\Users\toshiba\Desktop\Programske paradigme (PP)\Windows_copy\ClipboardApp\bin\Debug\ClipboardApp.exe";
 
         /// <summary>
@@ -81,6 +82,9 @@ namespace CopyApp
             Debug.AutoFlush = true;
             
             Debug.WriteLine(Environment.NewLine + CurrentTime() + "CopyApp started");
+            Debug.WriteLine(CurrentTime() + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
+            // clipboardAppLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "ClipboardApp.exe");
+
 
             // Start ClipboardApp.exe
             if (Process.GetProcessesByName("ClipboardApp").Length == 0)
