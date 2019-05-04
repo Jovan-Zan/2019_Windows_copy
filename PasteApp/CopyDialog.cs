@@ -62,13 +62,21 @@ namespace PasteApp
 
         public void RobocopyOutputHandler(object sendingProcess, DataReceivedEventArgs outLine)
         {
-            if (outLine.Data == null)
+            if (String.IsNullOrEmpty(outLine.Data))
                 return;
 
-            Match m;
+            if (totalFileSize == 0 || totalFileCount == 0)
+            {
+                // We act as if everything is copied. 
+                filesProcessed = totalFileCount;
+                bytesCopied = totalFileSize;
+               
+                this.Close();
+                return;
+            }
 
             // Check if new file is being processed.
-            m = reNewFile.Match(outLine.Data);
+            Match m = reNewFile.Match(outLine.Data);
             if (m.Success && File.Exists(m.Groups[2].Value))
             {
                 currentFileSize = Convert.ToInt64(m.Groups[1].Value);

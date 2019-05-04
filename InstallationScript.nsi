@@ -9,7 +9,7 @@
 ;------------------------------
 
 ; The name of the installer
-	Name "${APP_NAME} Installer"
+	Name "${APP_NAME}"
 
 ; The output file
 	OutFile "MultithreadWindowsCopyInstaller.exe"
@@ -73,6 +73,9 @@ Section ""
 	
 ; Add Robo-Paste command
 	WriteRegStr HKCR "Directory\Background\shell\Robo-Paste\command" "" '"$INSTDIR\PasteApp.exe" "%v"' 
+	
+; Set "hide file name extensions" to false
+	WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "HideFileExt" 0
 		
 ; Write the uninstall keys for Windows
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayName" "${APP_NAME}"

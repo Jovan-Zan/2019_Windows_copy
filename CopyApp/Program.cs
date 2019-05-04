@@ -51,6 +51,7 @@ namespace CopyApp
 
             formatter.Serialize(mmvStream, lines);
             mmvStream.Seek(0, SeekOrigin.Begin);
+            mmvStream.Close();
         }
 
 
@@ -95,9 +96,10 @@ namespace CopyApp
             
             Debug.WriteLine(Environment.NewLine + CurrentTime() + "CopyApp started");
             Debug.WriteLine(CurrentTime() + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
-            clipboardAppLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "ClipboardApp.exe");
 
-
+            // Note: ClipboardApp.exe, CopyApp.exe and PasteApp.exe will be installed in the same folder.
+            clipboardAppLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "ClipboardApp.exe"); 
+     
             // Start ClipboardApp.exe
             if (Process.GetProcessesByName("ClipboardApp").Length == 0)
             {
@@ -165,7 +167,7 @@ namespace CopyApp
             {
                 // TODO
             }
-            
+
             // Release the mutex
             oneAppInstanceMutex.ReleaseMutex();
 

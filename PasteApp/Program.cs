@@ -9,6 +9,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace PasteApp
 {
@@ -150,6 +151,7 @@ namespace PasteApp
 
             string[] lines = (string[]) formatter.Deserialize(mmvStream);
             mmvStream.Seek(0, SeekOrigin.Begin);
+            mmvStream.Close();
             return lines;
         }
 
@@ -258,6 +260,23 @@ namespace PasteApp
             Debug.AutoFlush = true;
 
             Debug.WriteLine(Environment.NewLine + CurrentTime() + "PasteApp started");
+
+            // File extensions must not be hidden in windows explorer itself
+            // because "SelectedItems()" will return names of selected items 
+            // as they are displayed in windows explorer.
+            string regKey_ExplorerAdvanced = @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced";
+            var userSetting = (int)Registry.GetValue(regKey_ExplorerAdvanced, "HideFileExt", null);
+            if (userSetting == 0x00000001)
+            {
+                string message =
+                    "File name extensions must be visible before selecting items to copy! " + 
+                    "Don't worry, we'll turn them on for you. Refresh folder view and repeat copy-paste process.";
+                MessageBox.Show( message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                
+                // Creates the key and value if they don't exist.
+                Registry.SetValue(regKey_ExplorerAdvanced, "HideFileExt", 0, RegistryValueKind.DWord);
+                return;
+            }
 
             // Obtain destination folder from arguments.
             string destination;
