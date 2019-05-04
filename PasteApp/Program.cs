@@ -386,9 +386,12 @@ namespace PasteApp
 
             UIThread.Join();
 
-            // needed closing GUI before this
-            // deleting items if requested robo-cut
-            if (copyOrCutOption == "cut")
+
+            // Delete items if robo-cut was requested.
+            // Deletion ocurs after GUI closes.
+            // This prevents user from aborting delete process.
+            // If cut operation is canceled, not a single file gets deleted.
+            if (copyOrCutOption == "cut" && operationAborted == false)
             {
                 foreach (string file in files)
                 {
