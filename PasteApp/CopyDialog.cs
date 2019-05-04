@@ -44,6 +44,7 @@ namespace PasteApp
         private Regex rePercUpdate = new Regex(@"\s*(\d{1,3}(\.\d)?)%", RegexOptions.Compiled);
 
         private bool isPaused = false;
+        private bool closingFromInside = false;
 
         public CopyDialog(long totalFileCount, long totalFileSize, string sourceDir, string destDir)
         {
@@ -188,9 +189,15 @@ namespace PasteApp
 
         public void RobocopyErrorHandler(object sendingProcess, DataReceivedEventArgs outLine)
         {
-            // TODO
-            if (outLine.Data == null)
-                return;
+            MessageBox.Show(
+                "Underlying robocopy process crashed! Try again with the copy-paste process.",
+                "Error!",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+
+            Program.AbortCopying();
+            closingFromInside = true;
+            Application.Exit();
 
             this.Refresh();
         }
@@ -402,6 +409,7 @@ namespace PasteApp
             if (result == DialogResult.Yes)
             {
                 Program.AbortCopying();
+                closingFromInside = true;
                 Application.Exit();
             }
             else
@@ -413,8 +421,9 @@ namespace PasteApp
 
         private void CopyDialog_FormClosing(object sender, FormClosingEventArgs e)
         {
-            // If the app hasn't finished, prompt a confirmation dialog.
-            if (filesProcessed != totalFileCount)
+            // If the app hasn't finished or the closing wasn't from inside,
+            // prompt a confirmation dialog.
+            if (filesProcessed != totalFileCount && closingFromInside == false)
             {
                 Program.PauseCopying();
 

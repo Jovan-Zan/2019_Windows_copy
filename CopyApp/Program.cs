@@ -23,16 +23,6 @@ namespace CopyApp
         [DllImport("User32.dll")]
         public static extern IntPtr GetForegroundWindow();
 
-        /// <summary>
-        /// From docs.microsoft.com:
-        /// The GetDesktopWindow function returns a handle to the desktop window. 
-        /// The desktop window covers the entire screen. 
-        /// The desktop window is the area on top of which other windows are painted.
-        /// </summary>
-        /// <returns>Handle to the desktop.</returns>
-        [DllImport("User32.dll", SetLastError = false)]
-        static extern IntPtr GetDesktopWindow();
-
         // Only one instance of the app should execute at any time.
         // Primary reason is multiple instances of the app being started when the app
         // is called from the windows exlporer context menu for a selection of multiple files.
@@ -54,10 +44,6 @@ namespace CopyApp
             mmvStream.Close();
         }
         
-        // HARDCODED!!!
-        // Used during development, when apps are in different folders.
-        private static string clipboardAppLocation = @"C:\Users\toshiba\Desktop\Programske paradigme (PP)\Windows_copy\ClipboardApp\bin\Debug\ClipboardApp.exe";
-
         /// <summary>
         /// Formatted current time.
         /// </summary>
@@ -97,7 +83,7 @@ namespace CopyApp
             Debug.WriteLine(CurrentTime() + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
 
             // Note: ClipboardApp.exe, CopyApp.exe and PasteApp.exe will be installed in the same folder.
-            clipboardAppLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "ClipboardApp.exe"); 
+            string clipboardAppLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "ClipboardApp.exe"); 
      
             // Start ClipboardApp.exe
             if (Process.GetProcessesByName("ClipboardApp").Length == 0)
@@ -112,7 +98,6 @@ namespace CopyApp
             }
             
             IntPtr foregroundWindowHandle = GetForegroundWindow();
-            IntPtr desktopWindowHandle = GetDesktopWindow();
 
             Debug.WriteLine(CurrentTime() + "Foreground window handle AS IntPtr: " + foregroundWindowHandle);
             Debug.WriteLine(CurrentTime() + "Foreground window handle AS int: " + foregroundWindowHandle.ToInt32());
