@@ -189,8 +189,11 @@ namespace PasteApp
 
         public void RobocopyErrorHandler(object sendingProcess, DataReceivedEventArgs outLine)
         {
+            if (String.IsNullOrEmpty(outLine.Data))
+                return;
+
             MessageBox.Show(
-                "Underlying robocopy process crashed! Try again with the copy-paste process.",
+                "Underlying robocopy process crashed! Try again with the copy-paste process.\n" + outLine.Data,
                 "Error!",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
