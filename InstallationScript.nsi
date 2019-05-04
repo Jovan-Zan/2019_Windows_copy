@@ -2,10 +2,18 @@
 
 	!define APP_NAME "MultithreadWindowsCopy"
 
-;Include Modern UI
+; Include Modern UI
 	!include "MUI2.nsh"
+	
+; Includes KillProcess
 	!include "nsProcess.nsh"
-
+	
+; Includes if statement
+	!include LogicLib.nsh
+	
+; Includes runningX64
+	!include x64.nsh
+	
 ;------------------------------
 
 ; The name of the installer
@@ -43,6 +51,14 @@
 
 ;------------------------------
 
+; On installation initialization, set registry view to x64 if running x64
+Function .onInit
+  ${If} ${RunningX64}
+    SetRegView 64
+  ${EndIf}
+FunctionEnd
+
+;------------------------------
 
 Section ""
 
@@ -57,14 +73,13 @@ Section ""
 	File "ClipboardApp.exe"
 	File "ClipboardApp.exe.config"	
 	
-	
 ; Save installation folder to registry
-	WriteRegStr HKLM "Software\${APP_NAME}" "InstallDir" $INSTDIR  
+	WriteRegStr HKLM "Software\${APP_NAME}" "InstallDir" "$INSTDIR"  
 
 ; Add Robo-Copy command
 	WriteRegStr HKCR "Directory\shell\Robo-Copy\command" "" '"$INSTDIR\CopyApp.exe" "copy"'
 	WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer" "MultipleInvokePromptMinimum" 16
-	; OVO MOOOOOZDA NE MORA 
+	; This is for folder right click menu
 	WriteRegStr HKCR "*\shell\Robo-Copy\command" "" '"$INSTDIR\CopyApp.exe" "copy"'
 	
 ; Add Robo-Cut command
@@ -87,11 +102,21 @@ Section ""
 	WriteUninstaller "$INSTDIR\uninstall.exe"
 SectionEnd
 
+;------------------------------
+
+; On UNinstallation initialization, set registry view to x64 if running x64
+Function un.onInit
+  ${If} ${RunningX64}
+    SetRegView 64
+  ${EndIf}
+FunctionEnd
+
+;------------------------------
 
 Section "Uninstall"
 ; Kill ClipboardApp.exe before uninstallation and save result in registry R0
 	${nsProcess::KillProcess} "ClipboardApp.exe" $R0
-
+	
 ; Delete registry keys and values
 	DeleteRegKey HKLM "Software\${APP_NAME}"
 	DeleteRegKey HKCR "Directory\shell\Robo-Copy"
