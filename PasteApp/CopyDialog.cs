@@ -219,6 +219,7 @@ namespace PasteApp
 
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(CopyDialog));
             this.tlp = new System.Windows.Forms.TableLayoutPanel();
             this.lblDescription = new System.Windows.Forms.Label();
             this.pbProgressBar = new System.Windows.Forms.ProgressBar();
@@ -370,6 +371,7 @@ namespace PasteApp
             this.ClientSize = new System.Drawing.Size(450, 210);
             this.Controls.Add(this.tlp);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "CopyDialog";
             this.Text = "0% complete";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.CopyDialog_FormClosing);
