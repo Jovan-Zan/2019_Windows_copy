@@ -60,6 +60,60 @@ namespace PasteApp
             stopwatch.Start();
         }
 
+        private string BytesCompactForm(long bytes)
+        {
+            long orderOfMagnitude = 1;
+            if (bytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", bytes) + "B";
+            orderOfMagnitude *= 1024;
+            if (bytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "KB";
+            orderOfMagnitude *= 1024;
+            if (bytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "MB";
+            orderOfMagnitude *= 1024;
+            if (bytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "GB";
+            orderOfMagnitude *= 1024;
+            return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "TB";
+        }
+
+        private string SpeedCompactForm(double speedInBytes)
+        {
+            long orderOfMagnitude = 1;
+            if (speedInBytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", speedInBytes) + " B/s";
+            orderOfMagnitude *= 1024;
+            if (speedInBytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", speedInBytes / orderOfMagnitude) + " KB/s";
+            orderOfMagnitude *= 1024;
+            if (speedInBytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", speedInBytes / orderOfMagnitude) + " MB/s";
+            orderOfMagnitude *= 1024;
+            if (speedInBytes < orderOfMagnitude * 1024)
+                return "" + string.Format("{0:0.00}", speedInBytes / orderOfMagnitude) + "GB/s";
+            orderOfMagnitude *= 1024;
+            return "" + string.Format("{0:0.00}", speedInBytes / orderOfMagnitude) + "TB/s";
+
+        }
+
+        private string TimeRemainingCompactForm(long timeRemaining)
+        {
+            if (timeRemaining >= TimeSpan.MaxValue.TotalSeconds)
+                return String.Format("{0} days", timeRemaining / (60 * 60 * 24));
+
+            TimeSpan ts = TimeSpan.FromSeconds(Convert.ToDouble(timeRemaining));
+            if (ts.TotalDays >= 1)
+                return "" + ts.Days + " days and " + ts.Hours + " hours";
+            else if (ts.Hours != 0)
+                return "" + ts.Hours + " hours and " + ts.Minutes + " minutes";
+            else if (ts.Minutes != 0)
+                return "" + ts.Minutes + " minutes";
+            else
+                return "" + ts.Seconds + " seconds";
+
+        }
+
         public void RobocopyOutputHandler(object sendingProcess, DataReceivedEventArgs outLine)
         {
             if (String.IsNullOrEmpty(outLine.Data))
@@ -139,60 +193,6 @@ namespace PasteApp
                 return;
 
             this.Refresh();
-        }
-
-        private string BytesCompactForm(long bytes)
-        {
-            long orderOfMagnitude = 1;
-            if (bytes < orderOfMagnitude * 1024)
-                return "" + string.Format("{0:0.00}", bytes) + "B";
-            orderOfMagnitude *= 1024;
-            if (bytes < orderOfMagnitude * 1024)
-                return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "KB";
-            orderOfMagnitude *= 1024;
-            if (bytes < orderOfMagnitude * 1024)
-                return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "MB";
-            orderOfMagnitude *= 1024;
-            if (bytes < orderOfMagnitude * 1024)
-                return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "GB";
-            orderOfMagnitude *= 1024;
-            return "" + string.Format("{0:0.00}", (Convert.ToDouble(bytes) / orderOfMagnitude)) + "TB";
-        }
-
-        private string SpeedCompactForm(double speedInBytes)
-        {
-            long orderOfMagnitude = 1;
-            if (speedInBytes < orderOfMagnitude * 1024)
-                return "" + string.Format("{0:0.00}", speedInBytes) + " B/s";
-            orderOfMagnitude *= 1024;
-            if (speedInBytes < orderOfMagnitude * 1024) 
-                return "" + string.Format("{0:0.00}", speedInBytes / orderOfMagnitude) + " KB/s";
-            orderOfMagnitude *= 1024;
-            if (speedInBytes < orderOfMagnitude * 1024)
-                return "" + string.Format("{0:0.00}", speedInBytes / orderOfMagnitude) + " MB/s";
-            orderOfMagnitude *= 1024;
-            if (speedInBytes < orderOfMagnitude * 1024)
-                return "" + string.Format("{0:0.00}", speedInBytes / orderOfMagnitude) + "GB/s";
-            orderOfMagnitude *= 1024;
-            return "" + string.Format("{0:0.00}", speedInBytes / orderOfMagnitude) + "TB/s";
-
-        }
-
-        private string TimeRemainingCompactForm(long timeRemaining)
-        {
-            if (timeRemaining >= TimeSpan.MaxValue.TotalSeconds)
-                return String.Format("{0} days", timeRemaining / (60 * 60 * 24));
-
-            TimeSpan ts = TimeSpan.FromSeconds(Convert.ToDouble(timeRemaining));
-            if (ts.TotalDays >= 1)
-                return "" + ts.Days + " days and " + ts.Hours + " hours";
-            else if (ts.Hours != 0)
-                return "" + ts.Hours + " hours and " + ts.Minutes + " minutes";
-            else if (ts.Minutes != 0)
-                return "" + ts.Minutes + " minutes";
-            else
-                return "" + ts.Seconds + " seconds";
-
         }
 
         public void InitializeLabels(long fileCount, long totalFileSize, string sourceDir, string destDir)
@@ -430,7 +430,7 @@ namespace PasteApp
                 }
                 else
                 {
-                    // Prevent from from closing.
+                    // Prevent form from closing.
                     e.Cancel = true;
                     Program.ResumeCopying();
                 }

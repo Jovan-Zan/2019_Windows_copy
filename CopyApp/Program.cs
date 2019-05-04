@@ -53,8 +53,7 @@ namespace CopyApp
             mmvStream.Seek(0, SeekOrigin.Begin);
             mmvStream.Close();
         }
-
-
+        
         // HARDCODED!!!
         // Used during development, when apps are in different folders.
         private static string clipboardAppLocation = @"C:\Users\toshiba\Desktop\Programske paradigme (PP)\Windows_copy\ClipboardApp\bin\Debug\ClipboardApp.exe";
@@ -115,10 +114,6 @@ namespace CopyApp
             IntPtr foregroundWindowHandle = GetForegroundWindow();
             IntPtr desktopWindowHandle = GetDesktopWindow();
 
-            // Flag used to determine where CopyApp was called from Explorer window
-            // or straight from Desktop.
-            bool copyingFromExplorerWindow = false;
-
             Debug.WriteLine(CurrentTime() + "Foreground window handle AS IntPtr: " + foregroundWindowHandle);
             Debug.WriteLine(CurrentTime() + "Foreground window handle AS int: " + foregroundWindowHandle.ToInt32());
 
@@ -135,7 +130,6 @@ namespace CopyApp
 
                 if (window.HWND == (int)foregroundWindowHandle)
                 {
-                    copyingFromExplorerWindow = true;
                     List<string> filesToCopy = new List<string>();
 
                     // "cut" or "copy" option.
@@ -161,11 +155,6 @@ namespace CopyApp
                 }
 
                 Debug.Unindent();
-            }
-
-            if (copyingFromExplorerWindow == false)
-            {
-                // TODO
             }
 
             // Release the mutex
