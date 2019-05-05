@@ -16,9 +16,15 @@ namespace ClipboardApp
         {
             const int mmfMaxSize = 16 * 1024 * 1024;
             MemoryMappedFile mmf = MemoryMappedFile.CreateOrOpen("ClipboardAppMemoryMappedFile", mmfMaxSize, MemoryMappedFileAccess.ReadWrite);
-            
-            // the memory mapped file lives as long as this process is running
-            while (true) ;
+
+
+            // The memory mapped file lives as long as this process is running.
+            // For that purpose, ClipboardApp runs indefinetly.
+
+            // From the Microsoft docs:
+            // Begins running a standard application message loop 
+            // on the current thread, without a form.
+            System.Windows.Forms.Application.Run();
         }
     }
 }
