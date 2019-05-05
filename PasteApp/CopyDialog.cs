@@ -184,7 +184,7 @@ namespace PasteApp
                     this.Close();
             }
 
-            this.Refresh();
+           // this.Refresh();
         }
 
         public void RobocopyErrorHandler(object sendingProcess, DataReceivedEventArgs outLine)
@@ -201,8 +201,6 @@ namespace PasteApp
             Program.AbortCopying();
             closingFromInside = true;
             Application.Exit();
-
-            this.Refresh();
         }
 
         public void InitializeLabels(long fileCount, long totalFileSize, string sourceDir, string destDir)

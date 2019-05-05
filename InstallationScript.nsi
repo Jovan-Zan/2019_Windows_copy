@@ -21,6 +21,9 @@
 
 ; The output file
 	OutFile "MultithreadWindowsCopyInstaller.exe"
+	
+; Installer and program icon
+	!define MUI_ICON "Icon.ico"
 
 ; The default installation directory
 	InstallDir 	"$PROGRAMFILES\${APP_NAME}"
