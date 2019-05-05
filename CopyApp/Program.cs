@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
+using System.Windows.Forms;
 
 namespace CopyApp
 {
@@ -143,6 +144,11 @@ namespace CopyApp
 
                 Debug.Unindent();
             }
+
+            var messageBoxThread = new Thread(() => 
+                Application.Run(new AutoCloseMessageBox("Done", "Robo-Copy done." , 3000)));
+            messageBoxThread.Start();
+            messageBoxThread.Join();
 
             // Release the mutex
             oneAppInstanceMutex.ReleaseMutex();
