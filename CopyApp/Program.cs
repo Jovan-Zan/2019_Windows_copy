@@ -70,10 +70,11 @@ namespace CopyApp
                 Debug.WriteLine(e.StackTrace);
                 return;
             }
-            
+
+#if DEBUG
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-
+#endif
             // Used for debbuging.
             Debug.Listeners.Add(new TextWriterTraceListener(Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), productName, "debug.log")));
@@ -137,6 +138,7 @@ namespace CopyApp
                     WriteToMMF(filesToCopy.ToArray());
 
                     Debug.Unindent();
+                    break;
                 }
 
                 Debug.Unindent();
@@ -145,9 +147,11 @@ namespace CopyApp
             // Release the mutex
             oneAppInstanceMutex.ReleaseMutex();
 
+#if DEBUG
             stopwatch.Stop();
             Debug.WriteLine(CurrentTime() + "Miliseconds elapsed: " + stopwatch.ElapsedMilliseconds);
             Debug.WriteLine(CurrentTime() + "CoppyApp finished.");
+#endif
         } 
     }
 }

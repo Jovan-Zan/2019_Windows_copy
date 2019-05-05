@@ -183,8 +183,6 @@ namespace PasteApp
                 if (filesProcessed == totalFileCount)
                     this.Close();
             }
-
-           // this.Refresh();
         }
 
         public void RobocopyErrorHandler(object sendingProcess, DataReceivedEventArgs outLine)
