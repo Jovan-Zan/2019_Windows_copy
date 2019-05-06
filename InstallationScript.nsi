@@ -119,6 +119,9 @@ FunctionEnd
 Section "Uninstall"
 ; Kill ClipboardApp.exe before uninstallation and save result in registry R0
 	${nsProcess::KillProcess} "ClipboardApp.exe" $R0
+
+; Give Windows some time to actually kill the process
+	Sleep 3000
 	
 ; Delete registry keys and values
 	DeleteRegKey HKLM "Software\${APP_NAME}"
