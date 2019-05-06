@@ -16,7 +16,7 @@ For details about robocopy see [robocopy | Microsoft Docs.](https://docs.microso
 * [Nullsoft scriptable install system (NSIS)](https://nsis.sourceforge.io/) is used to create installation wizard.
 
 ## Installation
-Simple installation using installation wizard.
+Simple installation using installation wizard ([Link](https://github.com/matf-pp2019/Windows_copy/releases/download/v1.0/MultithreadWindowsCopyInstaller.exe)).
 
 ## Compatibility 
 Currently, the feature is tested only on Windows 10.  
