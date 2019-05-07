@@ -16,17 +16,23 @@ For details about robocopy see [robocopy | Microsoft Docs.](https://docs.microso
 * [Nullsoft scriptable install system (NSIS)](https://nsis.sourceforge.io/) is used to create installation wizard.
 
 ## Installation
-Simple installation using installation wizard ([Link](https://github.com/matf-pp2019/Windows_copy/releases/download/v1.0/MultithreadWindowsCopyInstaller.exe)).
+Simple installation using installation wizard ([Link](https://github.com/matf-pp2019/Windows_copy/releases/download/v1.0/MultithreadWindowsCopyInstaller.exe)).  
+Only prerequisite is .NET Framework 4.0.  
+.NET Framework 4.0 is included in Windows 8 and later and can be installed on Windows 7 and Windows Vista.
 
 ## Compatibility 
-Currently, the feature is tested only on Windows 10.  
+Currently, the feature is tested and working on:  
+* Windows 10 Enterprise x64.
+* Windows 10 Home x64
+* Windows 7 Home Basic x86  
+  
 Further testing on other Windows versions supporting robocopy (*Windows Vista* and later and *Windows Server 2008* and later) is in progress.
 
 ## Notes
 - File overwritting is turned on by default.
 - We will not be working on advanced features, like custom number of threads and optional copy-and-replace (turned on by default), because for
 some unknown reason robocopy freezes when these two flags are turned on.  
-
+- There is a known bug (#2) when user tries to copy directly from the Desktop and Robo-Paste command doesn't do anything. This can be "mitigated" by opening the Desktop as a Windows Explorer windows and copying files from there.  
 
 ## Authors
 Marija Katic, contact: *mr16032 et alas.matf.bg.rs*  
